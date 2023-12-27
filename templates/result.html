@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TomTom Routing - Ergebnisse</title>
+</head>
+<body>
+    <h1>TomTom Routing - Ergebnisse</h1>
+    
+    {% if route_data.routes %}
+        <h2>Routeninformationen:</h2>
+        <ul>
+            {% for leg in route_data.routes[0].legs %}
+                <li><strong>Entfernung:</strong> {{ leg.summary.lengthInMeters / 1000 }} km</li>
+                <li><strong>Dauer:</strong> {{ leg.summary.travelTimeInSeconds / 60 }} Minuten</li>
+                <li>
+                    <strong>Strecke:</strong>
+                    <ul>
+                        {% for step in leg.steps %}
+                            <li>{{ step.instruction }}</li>
+                        {% endfor %}
+                    </ul>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>Es konnte keine Route gefunden werden.</p>
+    {% endif %}
+
+    <p><a href="/">Zurück zur Startseite</a></p>
+</body>
+</html>
