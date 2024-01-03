@@ -5,7 +5,7 @@ app = Flask(__name__)
 
 TOMTOM_API_KEY = '1n7hfspttTjYk53H8xAeOcNM53cseplD'
 
-def geocode_location(location): # eigene klasse oder file
+def geocode_location(location):  # eigene klasse oder file
     url = f'https://api.tomtom.com/search/2/geocode/{location}.json'
     params = {'key': TOMTOM_API_KEY}
     response = requests.get(url, params=params)
