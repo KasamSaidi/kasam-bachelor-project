@@ -5,7 +5,7 @@ app = Flask(__name__)
 
 TOMTOM_API_KEY = '1n7hfspttTjYk53H8xAeOcNM53cseplD'
 
-def geocode_location(location):
+def geocode_location(location): # eigene klasse oder file
     url = f'https://api.tomtom.com/search/2/geocode/{location}.json'
     params = {'key': TOMTOM_API_KEY}
     response = requests.get(url, params=params)
@@ -18,13 +18,16 @@ def geocode_location(location):
     else:
         return None
 
-def calculate_route(start_coordinates, end_coordinates):
+def calculate_route(start_coordinates, end_coordinates):  # eigene klasse oder file
     url = f'https://api.tomtom.com/routing/1/calculateRoute/{start_coordinates}:{end_coordinates}/json'
     params = {'key': TOMTOM_API_KEY}
+    eco_params = {'key': TOMTOM_API_KEY, 'routeType': 'eco'}
     response = requests.get(url, params=params)
     route_data = response.json()
 
-    if route_data.get('routes'):
+    eco_response = requests.get(url, params=eco_params)
+    eco_route_data = eco_response.json()
+    if route_data.get('routes') and eco_route_data.get('routes'):
         geojson = {
             "type": "FeatureCollection",
             "features": []
@@ -40,7 +43,23 @@ def calculate_route(start_coordinates, end_coordinates):
                     }
                 }
                 geojson['features'].append(feature)
-        return geojson, route_data
+
+        eco_geojson = {
+            "type": "FeatureCollection",
+            "features": []
+        }
+        for route in eco_route_data['routes']:
+            for leg in route['legs']:
+                eco_coordinates = [[point['longitude'], point['latitude']] for point in leg['points']]
+                eco_feature = {
+                    "type": "Feature",
+                    "geometry": {
+                        "type": "LineString",
+                        "coordinates": eco_coordinates
+                    }
+                }
+                eco_geojson['features'].append(eco_feature)
+        return geojson, eco_geojson, route_data, eco_route_data
     else:
         return None
 
@@ -58,13 +77,13 @@ def calculate_route_handler():
     end_coordinates, end_address = geocode_location(end_location)
 
     if start_coordinates and end_coordinates:
-        geojson_data, route_data = calculate_route(start_coordinates, end_coordinates)
+        geojson_data, eco_geojson_data, eco_route_data, route_data = calculate_route(start_coordinates, end_coordinates)
         return render_template('result.html', start_location=start_address, end_location=end_address,
                                start_coordinates=start_coordinates, end_coordinates=end_coordinates,
-                               geojson_data=geojson_data, route_data=route_data)
+                               geojson_data=geojson_data, route_data=route_data, eco_geojson_data=eco_geojson_data, eco_route_data=eco_route_data)
     else:
         return render_template('result.html', start_location=start_address, end_location=end_address,
-                               start_coordinates=None, end_coordinates=None, geojson_data=None, route_data=None)
+                               start_coordinates=None, end_coordinates=None, geojson_data=None, route_data=None, eco_geojson_data=None, eco_route_data=None)
 
 @app.route('/map')
 def show_map():

@@ -23,9 +23,20 @@
     <p><strong>Zielort:</strong> {{ end_location }} (Koordinaten: {{ end_coordinates }})</p>
 
     {% if route_data.routes %}
-        <h2>Routeninformationen:</h2>
+        <h2>Routeninformationen Normal:</h2>
         <ul>
             {% for leg in route_data.routes[0].legs %}
+                <li><strong>Entfernung:</strong> {{ leg.summary.lengthInMeters / 1000 }} km</li>
+                <li><strong>Dauer:</strong> {{ leg.summary.travelTimeInSeconds / 60 }} Minuten</li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>Es konnte keine Route gefunden werden.</p>
+    {% endif %}
+    {% if eco_route_data.routes %}
+        <h2>Routeninformationen Eco:</h2>
+        <ul>
+            {% for leg in eco_route_data.routes[0].legs %}
                 <li><strong>Entfernung:</strong> {{ leg.summary.lengthInMeters / 1000 }} km</li>
                 <li><strong>Dauer:</strong> {{ leg.summary.travelTimeInSeconds / 60 }} Minuten</li>
             {% endfor %}
@@ -41,6 +52,7 @@
         <script src="https://api.tomtom.com/maps-sdk-for-web/cdn/6.x/6.25.0/maps/maps-web.min.js"></script>
         <script>
             var geoJson = {{ geojson_data|safe }};
+            var ecogeoJson = {{ eco_geojson_data|safe }};
 
             var map = tt.map({
                 key: "1n7hfspttTjYk53H8xAeOcNM53cseplD",
@@ -63,6 +75,25 @@
                     },
                     paint: {
                         'line-color': '#007cbf',
+                        'line-width': 6
+                    }
+                });
+
+                map.addSource('eco-route-source', {
+                    type: 'geojson',
+                    data: ecogeoJson
+                });
+                    
+                map.addLayer({
+                    id: 'eco-route-layer',
+                    type: 'line',
+                    source: 'eco-route-source',
+                    layout: {
+                        'line-join': 'round',
+                        'line-cap': 'round'
+                    },
+                    paint: {
+                        'line-color': '#00bf89',
                         'line-width': 6
                     }
                 });
