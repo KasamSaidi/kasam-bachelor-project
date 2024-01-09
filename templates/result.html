@@ -45,7 +45,15 @@
         <p>Es konnte keine Route gefunden werden.</p>
     {% endif %}
 
+    <h2>Map:</h2> 
     <div id="map" class="map"></div>
+
+    <h2>Verkehrsflussinformation:</h2>
+    {% if traffic_flow_data %}
+        <p><strong>Verkehrsflussinformation:</strong> {{ traffic_flow_data.currentTravelTime }} Minuten, Geschwindigkeit: {{ traffic_flow_data.currentSpeed }} km/h</p>
+    {% else %}
+        <p>Keine Verkehrsflussinformation verfügbar.</p>
+    {% endif %}
 
     {% if geojson_data %}
         <script src="https://api.tomtom.com/maps-sdk-for-web/cdn/6.x/6.25.0/services/services-web.min.js"></script>

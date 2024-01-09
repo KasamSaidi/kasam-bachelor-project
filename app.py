@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, jsonify
 import requests
 
 app = Flask(__name__)
@@ -17,6 +17,26 @@ def geocode_location(location):  # eigene klasse oder file
         return f'{coordinates["lat"]},{coordinates["lon"]}', address['freeformAddress']
     else:
         return None
+
+def fetch_traffic_flow(points):  # loop durch alle points um traffic fuer alle straßen zu kriegen
+    try:
+        traffic_api_url = 'https://api.tomtom.com/traffic/services/4/flowSegmentData/absolute/10/json'
+        start_point = points[0]
+        point_str = "{},{}".format(start_point['latitude'], start_point['longitude'])
+
+        traffic_api_params = {
+            'key': TOMTOM_API_KEY,
+            'point': point_str
+        }
+        response = requests.get(traffic_api_url, params=traffic_api_params)
+
+        traffic_flow_data = response.json().get('flowSegmentData', {})
+        print(traffic_flow_data)
+        return traffic_flow_data
+
+    except Exception as e:
+        print(f"Error fetching traffic flow data: {e}")
+        return {"error": "Error fetching traffic flow data"}
 
 def calculate_route(start_coordinates, end_coordinates):  # eigene klasse oder file
     url = f'https://api.tomtom.com/routing/1/calculateRoute/{start_coordinates}:{end_coordinates}/json'
@@ -70,20 +90,27 @@ def index():
 
 @app.route('/calculate_route', methods=['POST'])
 def calculate_route_handler():
-    start_location = request.form.get('start_location')
-    end_location = request.form.get('end_location')
+    try:
+        start_location = request.form.get('start_location')
+        end_location = request.form.get('end_location')
 
-    start_coordinates, start_address = geocode_location(start_location)
-    end_coordinates, end_address = geocode_location(end_location)
+        start_coordinates, start_address = geocode_location(start_location)
+        end_coordinates, end_address = geocode_location(end_location)
 
-    if start_coordinates and end_coordinates:
-        geojson_data, eco_geojson_data, eco_route_data, route_data = calculate_route(start_coordinates, end_coordinates)
-        return render_template('result.html', start_location=start_address, end_location=end_address,
-                               start_coordinates=start_coordinates, end_coordinates=end_coordinates,
-                               geojson_data=geojson_data, route_data=route_data, eco_geojson_data=eco_geojson_data, eco_route_data=eco_route_data)
-    else:
-        return render_template('result.html', start_location=start_address, end_location=end_address,
-                               start_coordinates=None, end_coordinates=None, geojson_data=None, route_data=None, eco_geojson_data=None, eco_route_data=None)
+        if start_coordinates and end_coordinates:
+            geojson_data, eco_geojson_data, eco_route_data, route_data = calculate_route(start_coordinates, end_coordinates)
+            traffic_flow_data = fetch_traffic_flow(route_data['routes'][0]['legs'][0]['points'])
+            return render_template('result.html', start_location=start_address, end_location=end_address,
+                                   start_coordinates=start_coordinates, end_coordinates=end_coordinates,
+                                   geojson_data=geojson_data, route_data=route_data, eco_geojson_data=eco_geojson_data,
+                                   eco_route_data=eco_route_data, traffic_flow_data=traffic_flow_data)
+        else:
+            return render_template('result.html', start_location=start_address, end_location=end_address,
+                                   start_coordinates=None, end_coordinates=None, geojson_data=None, route_data=None, eco_geojson_data=None,
+                                   eco_route_data=None, traffic_flow_data=None)
+    except Exception as e:
+        print(f"Error calculating route: {e}")
+        return jsonify({"error": "Error calculating route"}), 500
 
 @app.route('/map')
 def show_map():
