@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kasam's Routing</title>
+</head>
+<body>
+    <h1>Kasam's Route Eingabe</h1>
+    <form action="/calculate_route" method="post">
+        <label for="select_vehicle">Ihr Fahrzeug:</label>
+        <datalist id="vehicles">
+            {% for vehicle in vehicles %}
+                <option value="{{ vehicle }}"></option>
+            {% endfor %}
+        </datalist>
+        <input list="vehicles" type="search" placeholder="Suche nach ihrem Automodell">
+        <br>
+        <label for="start_location">Startort:</label>
+        <input type="text" name="start_location" required>
+        <br>
+        <label for="end_location">Zielort:</label>
+        <input type="text" name="end_location" required>
+        <br>
+        <input type="submit" value="Route berechnen">
+    </form>
+    <p><a href="/">Zurück zur Homepage</a></p>
+</body>
+</html>
+

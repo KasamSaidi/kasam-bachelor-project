@@ -3,6 +3,8 @@ import requests
 
 app = Flask(__name__)
 
+vehicles = ["VW Golf", "Toyota Camry", "Ford Mustang", "Tesla Model 3"]
+
 TOMTOM_API_KEY = '1n7hfspttTjYk53H8xAeOcNM53cseplD'
 
 def geocode_location(location):  # eigene klasse oder file
@@ -31,7 +33,6 @@ def fetch_traffic_flow(points):  # loop durch alle points um traffic fuer alle s
         response = requests.get(traffic_api_url, params=traffic_api_params)
 
         traffic_flow_data = response.json().get('flowSegmentData', {})
-        print(traffic_flow_data)
         return traffic_flow_data
 
     except Exception as e:
@@ -88,6 +89,10 @@ def calculate_route(start_coordinates, end_coordinates):  # eigene klasse oder f
 def index():
     return render_template('index.html')
 
+@app.route('/routing')
+def routing_input_handler():
+    return render_template('routing.html', vehicles=vehicles)
+
 @app.route('/calculate_route', methods=['POST'])
 def calculate_route_handler():
     try:
@@ -99,22 +104,19 @@ def calculate_route_handler():
 
         if start_coordinates and end_coordinates:
             geojson_data, eco_geojson_data, eco_route_data, route_data = calculate_route(start_coordinates, end_coordinates)
+            print('kasam:', route_data)
             traffic_flow_data = fetch_traffic_flow(route_data['routes'][0]['legs'][0]['points'])
-            return render_template('result.html', start_location=start_address, end_location=end_address,
+            return render_template('routing_result.html', start_location=start_address, end_location=end_address,
                                    start_coordinates=start_coordinates, end_coordinates=end_coordinates,
                                    geojson_data=geojson_data, route_data=route_data, eco_geojson_data=eco_geojson_data,
                                    eco_route_data=eco_route_data, traffic_flow_data=traffic_flow_data)
         else:
-            return render_template('result.html', start_location=start_address, end_location=end_address,
+            return render_template('routing_result.html', start_location=start_address, end_location=end_address,
                                    start_coordinates=None, end_coordinates=None, geojson_data=None, route_data=None, eco_geojson_data=None,
                                    eco_route_data=None, traffic_flow_data=None)
     except Exception as e:
         print(f"Error calculating route: {e}")
         return jsonify({"error": "Error calculating route"}), 500
-
-@app.route('/map')
-def show_map():
-    return render_template('map.html')
 
 if __name__ == '__main__':
     app.run(debug=True)
