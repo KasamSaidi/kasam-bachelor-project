@@ -6,6 +6,18 @@ app = Flask(__name__)
 vehicles = ["VW Golf", "Toyota Camry", "Ford Mustang", "Tesla Model 3"]
 
 TOMTOM_API_KEY = '1n7hfspttTjYk53H8xAeOcNM53cseplD'
+OPENELEVATION_API_URL = 'https://api.open-elevation.com/api/v1/lookup'
+OPENTOPODATA_HEALTH_URL = 'https://api.opentopodata.org/health'
+OPENTOPODATA_API_URL = 'https://api.opentopodata.org/v1/srtm90m'
+
+def is_opentopodata_available():
+    try:
+        response = requests.get(OPENTOPODATA_HEALTH_URL)
+        print('health:', response)
+        return response.ok
+
+    except requests.RequestException:
+        return False
 
 def geocode_location(location):  # eigene klasse oder file
     url = f'https://api.tomtom.com/search/2/geocode/{location}.json'
@@ -20,7 +32,7 @@ def geocode_location(location):  # eigene klasse oder file
     else:
         return None
 
-def fetch_traffic_flow(points):  # loop durch alle points um traffic fuer alle straßen zu kriegen
+def get_traffic_flow(points):  # loop durch alle points um traffic fuer alle straßen zu kriegen
     try:
         traffic_api_url = 'https://api.tomtom.com/traffic/services/4/flowSegmentData/absolute/10/json'
         start_point = points[0]
@@ -38,6 +50,35 @@ def fetch_traffic_flow(points):  # loop durch alle points um traffic fuer alle s
     except Exception as e:
         print(f"Error fetching traffic flow data: {e}")
         return {"error": "Error fetching traffic flow data"}
+
+def get_elevation_data_opentopodata(points):  # eigene klasse oder file
+    try:
+        data = {
+            "locations": "|".join([f"{point['latitude']},{point['longitude']}" for point in points]),
+            "interpolation": "cubic"
+        }
+
+        response = requests.post(OPENTOPODATA_API_URL, json=data)
+        elevation_data = response.json()
+        return elevation_data
+
+    except Exception as e:
+        print(f"Error fetching Opentopo Elevation data: {e}")
+        return {"error": "Error fetching Opentopo Elevation data"}
+
+def get_elevation_data_openelevation(points):
+    try:
+        response = requests.post(
+            OPENELEVATION_API_URL,
+            json={"locations": [{"latitude": point["latitude"], "longitude": point["longitude"]} for point in points]}
+        )
+
+        elevation_data = response.json()
+        return elevation_data
+
+    except Exception as e:
+        print(f"Error fetching Open Elevation data: {e}")
+        return {"error": "Error fetching Open Elevation data"}
 
 def calculate_route(start_coordinates, end_coordinates):  # eigene klasse oder file
     url = f'https://api.tomtom.com/routing/1/calculateRoute/{start_coordinates}:{end_coordinates}/json'
@@ -104,8 +145,15 @@ def calculate_route_handler():
 
         if start_coordinates and end_coordinates:
             geojson_data, eco_geojson_data, eco_route_data, route_data = calculate_route(start_coordinates, end_coordinates)
-            print('kasam:', route_data)
-            traffic_flow_data = fetch_traffic_flow(route_data['routes'][0]['legs'][0]['points'])
+
+            traffic_flow_data = get_traffic_flow(route_data['routes'][0]['legs'][0]['points'])
+            use_opentopodata = is_opentopodata_available()
+            if use_opentopodata:
+                elevation_data = get_elevation_data_opentopodata(route_data['routes'][0]['legs'][0]['points'])
+            else:
+                elevation_data = get_elevation_data_openelevation(route_data['routes'][0]['legs'][0]['points'])
+
+            print(elevation_data)
             return render_template('routing_result.html', start_location=start_address, end_location=end_address,
                                    start_coordinates=start_coordinates, end_coordinates=end_coordinates,
                                    geojson_data=geojson_data, route_data=route_data, eco_geojson_data=eco_geojson_data,
