@@ -51,7 +51,7 @@ def get_traffic_flow(points):  # loop durch alle points um traffic fuer alle str
         print(f"Error fetching traffic flow data: {e}")
         return {"error": "Error fetching traffic flow data"}
 
-def get_elevation_data_opentopodata(points):  # eigene klasse oder file
+def get_elevation_data_opentopodata(points):  # eigene klasse
     try:
         data = {
             "locations": "|".join([f"{point['latitude']},{point['longitude']}" for point in points]),
