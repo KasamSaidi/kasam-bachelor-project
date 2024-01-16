@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, jsonify
 import requests
+import json
 
 app = Flask(__name__)
 
@@ -13,7 +14,7 @@ OPENTOPODATA_API_URL = 'https://api.opentopodata.org/v1/srtm90m'
 def is_opentopodata_available():
     try:
         response = requests.get(OPENTOPODATA_HEALTH_URL)
-        print('health:', response)
+        print('Health:', response)
         return response.ok
 
     except requests.RequestException:
@@ -53,11 +54,17 @@ def get_traffic_flow(points):  # loop durch alle points um traffic fuer alle str
 
 def get_elevation_data_opentopodata(points):  # eigene klasse
     try:
-        data = {
-            "locations": "|".join([f"{point['latitude']},{point['longitude']}" for point in points]),
-            "interpolation": "cubic"
-        }
-
+        if len(points) <= 100:
+            data = {
+                "locations": "|".join([f"{point['latitude']},{point['longitude']}" for point in points]),
+                "interpolation": "cubic"
+            }
+        else:
+            reduced_points = [points[0], points[-1]]
+            data = {
+                "locations": "|".join([f"{point['latitude']},{point['longitude']}" for point in reduced_points]),
+                "interpolation": "cubic"
+            }
         response = requests.post(OPENTOPODATA_API_URL, json=data)
         elevation_data = response.json()
         return elevation_data
@@ -82,10 +89,15 @@ def get_elevation_data_openelevation(points):
 
 def calculate_route(start_coordinates, end_coordinates):  # eigene klasse oder file
     url = f'https://api.tomtom.com/routing/1/calculateRoute/{start_coordinates}:{end_coordinates}/json'
-    params = {'key': TOMTOM_API_KEY}
+    params = {'key': TOMTOM_API_KEY, 'extendedRouteRepresentation': 'distance'}
     eco_params = {'key': TOMTOM_API_KEY, 'routeType': 'eco'}
     response = requests.get(url, params=params)
     route_data = response.json()
+
+    #  suche nur elevation von punkten in progress und errechne so durchschnitt steigung und steigung zwischen diesen punkten
+    json_object = json.dumps(route_data, indent=4)
+    with open("route_data.json", "w") as outfile:
+        outfile.write(json_object)
 
     eco_response = requests.get(url, params=eco_params)
     eco_route_data = eco_response.json()
@@ -153,7 +165,6 @@ def calculate_route_handler():
             else:
                 elevation_data = get_elevation_data_openelevation(route_data['routes'][0]['legs'][0]['points'])
 
-            print(elevation_data)
             return render_template('routing_result.html', start_location=start_address, end_location=end_address,
                                    start_coordinates=start_coordinates, end_coordinates=end_coordinates,
                                    geojson_data=geojson_data, route_data=route_data, eco_geojson_data=eco_geojson_data,
