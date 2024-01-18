@@ -1,5 +1,6 @@
 
-from .base_route import BaseRoute, TOMTOM_API_KEY
+from config import TOMTOM_API_KEY
+from .base_route import BaseRoute
 
 
 class EcoRoute(BaseRoute):

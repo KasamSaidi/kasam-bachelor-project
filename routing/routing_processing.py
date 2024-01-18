@@ -1,10 +1,9 @@
 
+from config import TOMTOM_API_KEY
 from .base_route import BaseRoute
 from .eco_route import EcoRoute
 import requests
 
-
-TOMTOM_API_KEY = '1n7hfspttTjYk53H8xAeOcNM53cseplD'
 
 def geocode_location(location):
     url = f'https://api.tomtom.com/search/2/geocode/{location}.json'

@@ -1,7 +1,6 @@
 
 import requests
-
-TOMTOM_API_KEY = '1n7hfspttTjYk53H8xAeOcNM53cseplD'
+from config import TOMTOM_API_KEY
 
 
 class BaseRoute:

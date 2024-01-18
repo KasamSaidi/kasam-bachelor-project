@@ -1,7 +1,6 @@
 
+from config import TOMTOM_API_KEY
 import requests
-
-TOMTOM_API_KEY = '1n7hfspttTjYk53H8xAeOcNM53cseplD'
 
 
 def get_traffic_flow(points):

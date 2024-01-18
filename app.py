@@ -1,19 +1,12 @@
 from flask import Flask, render_template, request, jsonify
-from routing.elevation import is_opentopodata_available, get_elevation_data_opentopodata, get_elevation_data_openelevation
-from routing.traffic import *
+from routing.elevation import get_elevation_data
+from routing.traffic import get_traffic_flow
 from routing.routing_processing import create_route_instance, geocode_location
 
 app = Flask(__name__)
 
 vehicles = ["VW Golf", "Toyota Camry", "Ford Mustang", "Tesla Model 3"]
 
-
-def get_elevation_data(points):
-    use_opentopodata = is_opentopodata_available()
-    if use_opentopodata:
-        return get_elevation_data_opentopodata(points)
-    else:
-        return get_elevation_data_openelevation(points)
 
 @app.route('/')
 def index():
@@ -39,7 +32,7 @@ def calculate_route_handler():
 
             traffic_flow_data = get_traffic_flow(route_data['routes'][0]['legs'][0]['points'])
 
-            get_elevation_data(route_data['routes'][0]['legs'][0]['points'])
+            get_elevation_data(route_data)
 
             return render_template('routing_result.html', start_location=start_address, end_location=end_address,
                                    start_coordinates=start_coordinates, end_coordinates=end_coordinates,

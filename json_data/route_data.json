@@ -1,0 +1,67 @@
+[
+  {
+    "pointIndex": 1,
+    "elevationDifference": -13.0,
+    "distanceDifference": 7898
+  },
+  {
+    "pointIndex": 2,
+    "elevationDifference": 16.0,
+    "distanceDifference": 15583
+  },
+  {
+    "pointIndex": 3,
+    "elevationDifference": 5.0,
+    "distanceDifference": 14871
+  },
+  {
+    "pointIndex": 4,
+    "elevationDifference": -10.0,
+    "distanceDifference": 25599
+  },
+  {
+    "pointIndex": 5,
+    "elevationDifference": 1.0,
+    "distanceDifference": 20083
+  },
+  {
+    "pointIndex": 6,
+    "elevationDifference": 48.0,
+    "distanceDifference": 32922
+  },
+  {
+    "pointIndex": 7,
+    "elevationDifference": -9.0,
+    "distanceDifference": 28097
+  },
+  {
+    "pointIndex": 8,
+    "elevationDifference": -33.0,
+    "distanceDifference": 63870
+  },
+  {
+    "pointIndex": 9,
+    "elevationDifference": -18.0,
+    "distanceDifference": 34734
+  },
+  {
+    "pointIndex": 10,
+    "elevationDifference": 5.0,
+    "distanceDifference": 19625
+  },
+  {
+    "pointIndex": 11,
+    "elevationDifference": 30.0,
+    "distanceDifference": 11474
+  },
+  {
+    "pointIndex": 12,
+    "elevationDifference": -19.0,
+    "distanceDifference": 12176
+  },
+  {
+    "pointIndex": 13,
+    "elevationDifference": -10.0,
+    "distanceDifference": 3141
+  }
+]
