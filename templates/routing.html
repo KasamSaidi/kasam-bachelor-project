@@ -9,12 +9,12 @@
     <h1>Kasam's Route Eingabe</h1>
     <form action="/calculate_route" method="post">
         <label for="select_vehicle">Ihr Fahrzeug:</label>
-        <datalist id="vehicles">
-            {% for vehicle in vehicles %}
-                <option value="{{ vehicle }}"></option>
+        <datalist id="vehicle_entries">
+            {% for vehicle in vehicle_entries %}
+                <option value="{{ vehicle.manufacturer + ' ' + vehicle.model + ' ' + vehicle.desc }}"></option>
             {% endfor %}
         </datalist>
-        <input list="vehicles" type="search" placeholder="Suche nach ihrem Automodell">
+        <input list="vehicle_entries" type="search" name = "select_vehicle" placeholder="Suche nach ihrem Automodell">
         <br>
         <label for="start_location">Startort:</label>
         <input type="text" name="start_location" required>

@@ -140,14 +140,17 @@ def calculate_average_elevation_and_distance(points):
     for i in range(0, len(points)):
         elevation_diff = points[i]['elevationDifference']
         distance_diff = points[i]['distanceDifference']
-        # print(i, distance_diff, elevation_diff)
+
         slope_percent, slope_degrees, distance_length = calculate_elevation_and_distance(elevation_diff, distance_diff)
 
         total_slope_percent += slope_percent
         total_slope_degrees += slope_degrees
         total_distance_length += distance_length
 
-    num_points = len(points) - 1
+    if len(points) > 1:
+        num_points = len(points) - 1
+    num_points = len(points)
+
     average_slope_percent = total_slope_percent / num_points
     average_slope_degrees = total_slope_degrees / num_points
 
