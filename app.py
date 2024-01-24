@@ -1,8 +1,8 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, url_for, redirect
 from routing.elevation import get_elevation_data
 from routing.traffic import get_traffic_flow
 from routing.routing_processing import create_route_instance, geocode_location
-from profile.car import Vehicle
+from profile.vehicle import Vehicle
 
 app = Flask(__name__)
 
@@ -16,6 +16,26 @@ def index():
 @app.route('/routing')
 def routing_input_handler():
     return render_template('routing.html', vehicle_entries=vehicle_entries)
+
+@app.route('/add_custom_car', methods=['GET', 'POST'])
+def add_custom_car():
+    if request.method == 'POST':
+        custom_manufacturer = request.form.get('custom_manufacturer')
+        custom_model = request.form.get('custom_model')
+        custom_fuel_type = request.form.get('custom_fuel_type')
+        custom_model_desc = request.form.get('custom_model_desc')
+
+        custom_car_entry = Vehicle(
+            model=custom_model,
+            manufacturer=custom_manufacturer,
+            desc=custom_model_desc,
+            fuel_type=custom_fuel_type,
+        )
+        vehicle_entries.append(custom_car_entry)
+
+        return redirect(url_for('routing_input_handler'))
+
+    return render_template('add_custom_car.html')
 
 @app.route('/calculate_route', methods=['POST'])
 def calculate_route_handler():

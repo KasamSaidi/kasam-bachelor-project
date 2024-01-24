@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eigenes Fahrzeug hinzufügen</title>
+</head>
+<body>
+    <h1>Eigenes Fahrzeug hinzufügen</h1>
+
+    <form action="/add_custom_car" method="post">
+        <label for="custom_manufacturer">Hersteller:</label>
+        <input type="text" name="custom_manufacturer" required>
+        <br>
+
+        <label for="custom_model">Model:</label>
+        <input type="text" name="custom_model" required>
+        <br>
+
+        <label for="custom_model_desc">Beschreibung:</label>
+        <input type="text" name="custom_model_desc" required>
+        <br>
+
+        <label for="custom_fuel_type">Treibstoff Art:</label>
+        <select name="custom_fuel_type" required>
+            <option value="diesel">Diesel</option>
+            <option value="electric">Elektrisch</option>
+        </select>
+        <br>
+
+        <input type="submit" value="Fahrzeug hinzufügen">
+    </form>
+
+    <p><a href="/routing">Zurück zum Routing</a></p>
+</body>
+</html>
