@@ -1,0 +1,6 @@
+{% extends 'index.html' %}
+{% block body %}
+<h2>Must Be Logged In...</h2>
+<p>You must be logged in to access this page!</p>
+<a href="{{url_for('login_user')}}">Login Here</a>
+{% endblock %}

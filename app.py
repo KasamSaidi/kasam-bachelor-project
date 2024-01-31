@@ -1,23 +1,129 @@
-from flask import Flask, render_template, request, jsonify, url_for, redirect
+from flask import Flask, render_template, request, jsonify, url_for, redirect, flash, session
+from flask_sqlalchemy import SQLAlchemy
 from routing.elevation import get_elevation_data
 from routing.traffic import get_traffic_flow
 from routing.routing_processing import create_route_instance, geocode_location
 from profile.vehicle import Vehicle
+from functools import wraps
+from werkzeug import Response
+from input import bcrypt_passwords
+from wtforms import StringField, validators, PasswordField
+from flask_wtf import FlaskForm
+from mapper import orm_mapper
+from typing_extensions import Union
+from login import login
+import os
 
 app = Flask(__name__)
 
-vehicle_entries = Vehicle.load_cars_from_excel('Euro_6_Latest.xlsx')
 
+file_path = os.path.abspath(os.getcwd()) + "\data.db"
+vehicle_entries = Vehicle.load_cars_from_excel('Euro_6_Latest.xlsx')
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + file_path
+user_id = 0
+db = SQLAlchemy(app)
+
+
+class RegistrationForm(FlaskForm):
+    username = StringField("Username", validators=[validators.Length(min=4, max=25)])
+    password = PasswordField("Password", validators=[validators.InputRequired()])
+
+@app.before_request
+def setup():
+    if os.path.isfile("data.db"):
+        boolean = False
+        session = db.session
+        orm_mapper.create_webapp_base(session)
+    else:
+        boolean = True
+    orm_mapper.create_base(boolean)
+    db.Model.metadata.create_all(bind=db.engine)
+
+def is_logged_in(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        if "username" in session:
+            return func(*args, **kwargs)
+        return render_template("forbidden.html")
+    return wrapper
 
 @app.route('/')
 def index():
     return render_template('index.html')
 
+@app.route("/logout")
+def logout():
+    session.pop("username", None)
+    flash("Successfully logged out!")
+    return render_template("index.html")
+
+@app.route("/register")
+def add_user():
+    form = RegistrationForm()
+    return render_template("registrationform.html", form=form)
+
+@app.route("/login")
+def login_user():
+    if 'username' in session:
+        flash("Sie sind schon eingeloggt.")
+    form = RegistrationForm()
+    return render_template("loginform.html", form=form)
+
+@app.route("/login_register", methods=["POST"])
+def login_register():
+    if request.referrer.endswith("/register"):
+        return register_user()
+    return save_login_user()
+
+def register_user() -> Union[Response, str]:
+    username = request.form["username"]
+    password = request.form["password"]
+    while True:
+        if isinstance(login.existing_user_check(username), int):
+            flash("Nutzer existiert bereits, versuchen Sie es wieder oder gehen Sie zum login.")
+            return redirect(url_for('add_user'))
+        else:
+            global user_id
+            user_id = 0
+            orm_mapper.webapp_user_session(user_id)
+            hashed_password = bcrypt_passwords.hash_password(password)
+            orm_mapper.user_mapper(username, hashed_password)
+            session["username"] = request.form["username"]
+            break
+
+    return render_template("user_dashboard.html", the_username=username)
+
+def save_login_user() -> Union[Response, str]:
+    username = request.form["username"]
+    password = request.form["password"]
+    while True:
+        if isinstance(login.existing_user_check(username), int):
+            global user_id
+            user_id = login.existing_user_check(username)
+            orm_mapper.webapp_user_session(user_id)
+            if login.password_verification(password, user_id):
+                session["username"] = request.form["username"]
+                break
+            else:
+                flash("Falsches Passwort, versuchen Sie es erneut")
+                return redirect(url_for('login_user'))
+        else:
+            flash("Kein Nutzer unter diesem Namen existiert, versuchen Sie es erneut.")
+            return redirect(url_for('login_user'))
+    return render_template("user_dashboard.html", the_username=username)
+
+@app.route("/menu")
+@is_logged_in
+def menu_page():
+    return render_template("menu.html")
+
 @app.route('/routing')
+@is_logged_in
 def routing_input_handler():
     return render_template('routing.html', vehicle_entries=vehicle_entries)
 
 @app.route('/add_custom_car', methods=['GET', 'POST'])
+@is_logged_in
 def add_custom_car():
     if request.method == 'POST':
         custom_manufacturer = request.form.get('custom_manufacturer')
@@ -38,6 +144,7 @@ def add_custom_car():
     return render_template('add_custom_car.html')
 
 @app.route('/calculate_route', methods=['POST'])
+@is_logged_in
 def calculate_route_handler():
     try:
         start_location = request.form.get('start_location')
@@ -71,4 +178,6 @@ def calculate_route_handler():
         return jsonify({"error": "Error calculating route"}), 500
 
 if __name__ == '__main__':
+    SECRET_KEY = os.urandom(32)
+    app.config['SECRET_KEY'] = SECRET_KEY
     app.run(debug=True)
