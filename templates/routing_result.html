@@ -16,6 +16,8 @@
         }
     </style>
 </head>
+{% extends 'index.html' %}
+{% block body %}
 <body>
     <h1>Kasam's Routing - Ergebnisse</h1>
 
@@ -87,6 +89,5 @@
         <p>Es konnte keine GeoJSON-Daten gefunden werden.</p>
     {% endif %}
 
-    <p><a href="/">Zurück zur Startseite</a></p>
 </body>
-</html>
+{% endblock %}

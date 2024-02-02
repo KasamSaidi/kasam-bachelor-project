@@ -8,7 +8,7 @@
             <div class="navbar-nav">
                 {% if session['username'] is defined and session['username']|length %}
                     <a class="nav-link" href="{{url_for('logout')}}">Logout</a>
-                    <a class="nav-link" href="{{url_for('menu_page')}}">User Menu</a>
+                    <a class="nav-link" href="{{url_for('routing_input_handler')}}">Routing</a>
                 {% else %}
                     <a class="nav-link" href="{{url_for('login_user')}}">Login</a>
                     <a class="nav-link" href="{{url_for('add_user')}}">Register</a>

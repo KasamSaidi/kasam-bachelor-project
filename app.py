@@ -1,23 +1,25 @@
+import os
+from typing_extensions import Union
+from functools import wraps
+from werkzeug import Response
+
 from flask import Flask, render_template, request, jsonify, url_for, redirect, flash, session
 from flask_sqlalchemy import SQLAlchemy
+from wtforms import StringField, validators, PasswordField
+from flask_wtf import FlaskForm
+
 from routing.elevation import get_elevation_data
 from routing.traffic import get_traffic_flow
 from routing.routing_processing import create_route_instance, geocode_location
 from profile.vehicle import Vehicle
-from functools import wraps
-from werkzeug import Response
 from input import bcrypt_passwords
-from wtforms import StringField, validators, PasswordField
-from flask_wtf import FlaskForm
 from mapper import orm_mapper
-from typing_extensions import Union
 from login import login
-import os
 
 app = Flask(__name__)
 
 
-file_path = os.path.abspath(os.getcwd()) + "\data.db"
+file_path = os.path.abspath(os.getcwd()) + "\data.db"  # "\data.db"
 vehicle_entries = Vehicle.load_cars_from_excel('Euro_6_Latest.xlsx')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + file_path
 user_id = 0
@@ -111,11 +113,6 @@ def save_login_user() -> Union[Response, str]:
             flash("Kein Nutzer unter diesem Namen existiert, versuchen Sie es erneut.")
             return redirect(url_for('login_user'))
     return render_template("user_dashboard.html", the_username=username)
-
-@app.route("/menu")
-@is_logged_in
-def menu_page():
-    return render_template("menu.html")
 
 @app.route('/routing')
 @is_logged_in

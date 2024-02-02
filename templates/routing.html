@@ -1,32 +1,34 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kasam's Routing</title>
-</head>
-<body>
-    <h1>Kasam's Route Eingabe</h1>
-    <form action="/calculate_route" method="post">
-        <label for="select_vehicle">Ihr Fahrzeug:</label>
-        <datalist id="vehicle_entries">
-            {% for vehicle in vehicle_entries %}
-                <option value="{{ vehicle.manufacturer + ' ' + vehicle.model + ' ' + vehicle.desc }}"></option>
-            {% endfor %}
-        </datalist>
-        <input list="vehicle_entries" type="search" name = "select_vehicle" placeholder="Suche nach ihrem Automodell">
-        <br>
-        <a href="/add_custom_car">Ihr Auto nicht gefunden? Eigenes Hinzufügen.</a>
-        <br>
-        <label for="start_location">Startort:</label>
-        <input type="text" name="start_location" required>
-        <br>
-        <label for="end_location">Zielort:</label>
-        <input type="text" name="end_location" required>
-        <br>
-        <input type="submit" value="Route berechnen">
-    </form>
-    <p><a href="/">Zurück zur Homepage</a></p>
-</body>
-</html>
+{% extends 'index.html' %}
 
+{% block body %}
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <h1>Kasam's Route Eingabe</h1>
+      <form action="/calculate_route" method="post">
+        <div class="mb-3">
+          <label for="select_vehicle" class="form-label">Ihr Fahrzeug:</label>
+          <datalist id="vehicle_entries">
+            {% for vehicle in vehicle_entries %}
+              <option value="{{ vehicle.manufacturer + ' ' + vehicle.model + ' ' + vehicle.desc }}"></option>
+            {% endfor %}
+          </datalist>
+          <input list="vehicle_entries" type="search" name="select_vehicle" class="form-control" placeholder="Suche nach Ihrem Automodell" required>
+        </div>
+        <a href="/add_custom_car" class="mb-3">Ihr Auto nicht gefunden? Eigenes Hinzufügen.</a>
+        <div class="mb-3">
+          <label for="start_location" class="form-label">Startort:</label>
+          <input type="text" name="start_location" class="form-control" required>
+        </div>
+        <div class="mb-3">
+          <label for="end_location" class="form-label">Zielort:</label>
+          <input type="text" name="end_location" class="form-control" required>
+        </div>
+        <div class="mb-3">
+          <input type="submit" value="Route berechnen" class="btn btn-dark">
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,18 +1,21 @@
 {% extends 'index.html' %}
+
 {% block body %}
-<form action="/login_register" method="POST">
-  <div class="row mb-3">
-    {{ form.username.label (class_="col-sm-2 col-form-label") }}
-    <div class="col-sm-10">
-      {{ form.username (class="form-control")}}
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <form action="/login_register" method="POST">
+        <div class="mb-3">
+          {{ form.username.label(class_="form-label") }}
+          {{ form.username(class="form-control") }}
+        </div>
+        <div class="mb-3">
+          {{ form.password.label(class_="form-label") }}
+          {{ form.password(class="form-control") }}
+        </div>
+        <button type="submit" class="btn btn-dark">Register</button>
+      </form>
     </div>
   </div>
-  <div class="row mb-3">
-    {{ form.password.label (class_="col-sm-2 col-form-label")}}
-    <div class="col-sm-10">
-      {{ form.password (class="form-control")}}
-    </div>
-  </div>
-  <button type="SUBMIT" class="btn btn-dark">Register</button>
-</form>
+</div>
 {% endblock %}

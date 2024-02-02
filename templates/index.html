@@ -13,12 +13,35 @@
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
     {% endfor %}
+    <style>
+        html, body {
+        height: 100%;
+        margin: 0;
+        }
 
+        body {
+        display: flex;
+        flex-direction: column;
+        }
+
+        #wrapper {
+        flex: 1;
+        }
+
+        #content {
+        flex: 1;
+        padding-bottom: 60px;
+        }
+      </style>
 </head>
 <body>
-{% include 'header.html' %}
-    {% block body %}
-    {% endblock %}
-{% include 'footer.html' %}
+    <div id="wrapper">
+        {% include 'header.html' %}
+        <div id="content">
+          {% block body %}
+          {% endblock %}
+        </div>
+      </div>
+      {% include 'footer.html' %}
 </body>
 </html>
