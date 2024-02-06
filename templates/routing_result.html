@@ -14,6 +14,19 @@
             height: 400px;
             width: 100%;
         }
+        .marker-icon {
+            background-position: center;
+            background-size: 30px 30px;
+            height: 30px;
+            position: absolute;
+            text-align: center;
+            top: 3px;
+            width: 30px;
+        }
+        .marker {
+            height: 30px;
+            width: 30px;
+        }
     </style>
 </head>
 {% extends 'index.html' %}
@@ -37,8 +50,21 @@
         <p>Es konnte keine Route gefunden werden.</p>
     {% endif %}
 
+    {% if eco_route_data.routes %}
+        <h2>Routeninformationen Eco:</h2>
+        <ul>
+            {% for leg in eco_route_data.routes[0].legs %}
+                <li><strong>Entfernung:</strong> {{ leg.summary.lengthInMeters / 1000 }} km</li>
+                <li><strong>Dauer:</strong> {{ leg.summary.travelTimeInSeconds / 60 }} Minuten</li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>Es konnte keine Route gefunden werden.</p>
+    {% endif %}
+
     <h2>Map:</h2> 
     <div id="map" class="map"></div>
+    <button onclick="toggleLayer()">Routentyp Wechseln</button>
 
     <h2>Verkehrsflussinformation:</h2>
     {% if traffic_flow_data %}
@@ -52,6 +78,10 @@
         <script src="https://api.tomtom.com/maps-sdk-for-web/cdn/6.x/6.25.0/maps/maps-web.min.js"></script>
         <script>
             var geoJson = {{ geojson_data|safe }};
+            var ecoJson = {{ eco_geojson_data|safe }};
+            var normalLayer;
+            var ecoLayer;
+            var isNormalLayerVisible = true;
 
             var map = tt.map({
                 key: "1n7hfspttTjYk53H8xAeOcNM53cseplD",
@@ -62,6 +92,10 @@
                 map.addSource('route-source', {
                     type: 'geojson',
                     data: geoJson
+                });
+                map.addSource('eco-route-source', {
+                    type: 'geojson',
+                    data: ecoJson
                 });
 
                 map.addLayer({
@@ -74,7 +108,7 @@
                     },
                     paint: {
                         'line-color': '#007cbf',
-                        'line-width': 6
+                        'line-width': 4
                     }
                 });
 
@@ -84,6 +118,72 @@
                 });
                 map.fitBounds(bounds, { padding: 20 });
             });
+
+            function toggleLayer() {
+                if (map.getLayer('route-layer')) {
+                    map.removeLayer('route-layer')
+                    map.addLayer({
+                    id: 'eco-route-layer',
+                    type: 'line',
+                    source: 'eco-route-source',
+                    layout: {
+                        'line-join': 'round',
+                        'line-cap': 'round'
+                    },
+                    paint: {
+                        'line-color': '#176917',
+                        'line-width': 4
+                    }
+                });
+                }
+                else {
+                    map.removeLayer('eco-route-layer')
+                    map.addLayer({
+                    id: 'route-layer',
+                    type: 'line',
+                    source: 'route-source',
+                    layout: {
+                        'line-join': 'round',
+                        'line-cap': 'round'
+                    },
+                    paint: {
+                        'line-color': '#007cbf',
+                        'line-width': 4
+                    }
+                });
+                }
+            }
+
+            function createMarker(icon, position, popupText) {
+                var markerElement = document.createElement('div');
+                markerElement.className = 'marker';
+
+                var markerContentElement = document.createElement('div');
+                markerContentElement.className = 'marker-content';
+                markerElement.appendChild(markerContentElement);
+
+                var iconElement = document.createElement('div');
+                iconElement.className = 'marker-icon';
+                iconElement.style.backgroundImage =
+                    'url(/static/' + icon + ')';
+                if (icon == 'ziel_flagge.png'){
+                    iconElement.style.left = '11px';
+                }
+                markerContentElement.appendChild(iconElement);
+
+                var popup = new tt.Popup({offset: 30}).setText(popupText);
+
+                new tt.Marker({element: markerElement, anchor: 'bottom'})
+                    .setLngLat(position)
+                    .setPopup(popup)
+                    .addTo(map);
+            }
+
+            var firstCoordinate = geoJson.features[0].geometry.coordinates[0];
+            var lastCoordinate = geoJson.features[0].geometry.coordinates[geoJson.features[0].geometry.coordinates.length - 1];
+            
+            createMarker('start_punkt.png', firstCoordinate, 'Startort');
+            createMarker('ziel_flagge.png', lastCoordinate, 'Ziel');
         </script>
     {% else %}
         <p>Es konnte keine GeoJSON-Daten gefunden werden.</p>

@@ -8,7 +8,7 @@ from flask_sqlalchemy import SQLAlchemy
 from wtforms import StringField, validators, PasswordField
 from flask_wtf import FlaskForm
 
-from routing.elevation import get_elevation_data
+# from routing.elevation import get_elevation_data
 from routing.traffic import get_traffic_flow
 from routing.routing_processing import create_route_instance, geocode_location
 from profile.vehicle import Vehicle
@@ -17,7 +17,7 @@ from mapper import orm_mapper
 from login import login
 
 app = Flask(__name__)
-
+app.static_folder = 'public'
 
 file_path = os.path.abspath(os.getcwd()) + "\data.db"  # "\data.db"
 vehicle_entries = Vehicle.load_cars_from_excel('Euro_6_Latest.xlsx')
@@ -154,18 +154,21 @@ def calculate_route_handler():
         end_coordinates, end_address = geocode_location(end_location)
 
         if start_coordinates and end_coordinates:
-            route_instance = create_route_instance(route_type='eco', start_coordinates=start_coordinates, end_coordinates=end_coordinates)
+            eco_route_instance = create_route_instance(route_type='eco', start_coordinates=start_coordinates, end_coordinates=end_coordinates)
+            route_instance = create_route_instance(route_type='normal', start_coordinates=start_coordinates, end_coordinates=end_coordinates)
 
             geojson_data, route_data = route_instance.calculate_route()
+            eco_geojson_data, eco_route_data = eco_route_instance.calculate_route()
 
             traffic_flow_data = get_traffic_flow(route_data['routes'][0]['legs'][0]['points'])
 
-            get_elevation_data(route_data)
+            # get_elevation_data(route_data)
 
             return render_template('routing_result.html', start_location=start_address, end_location=end_address,
                                    start_coordinates=start_coordinates, end_coordinates=end_coordinates,
-                                   geojson_data=geojson_data, route_data=route_data, traffic_flow_data=traffic_flow_data,
-                                   selected_vehicle=selected_vehicle)
+                                   geojson_data=geojson_data, route_data=route_data,
+                                   eco_geojson_data=eco_geojson_data, eco_route_data=eco_route_data,
+                                   traffic_flow_data=traffic_flow_data, selected_vehicle=selected_vehicle)
         else:
             return render_template('routing_result.html', start_location=start_address, end_location=end_address,
                                    start_coordinates=None, end_coordinates=None, geojson_data=None,
