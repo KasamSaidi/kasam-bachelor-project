@@ -1,0 +1,37 @@
+#map {
+    height: 400px;
+    width: 100%;
+}
+
+.marker-icon {
+    background-position: center;
+    background-size: 30px 30px;
+    height: 30px;
+    position: absolute;
+    text-align: center;
+    top: 3px;
+    width: 30px;
+}
+
+.marker {
+    height: 30px;
+    width: 30px;
+}
+html, body {
+    height: 100%;
+    margin: 0;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+}
+
+#wrapper {
+    flex: 1;
+}
+
+#content {
+    flex: 1;
+    padding-bottom: 60px;
+}

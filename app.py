@@ -17,7 +17,7 @@ from mapper import orm_mapper
 from login import login
 
 app = Flask(__name__)
-app.static_folder = 'public'
+app.static_folder = 'static'
 
 file_path = os.path.abspath(os.getcwd()) + "\data.db"  # "\data.db"
 vehicle_entries = Vehicle.load_cars_from_excel('Euro_6_Latest.xlsx')
