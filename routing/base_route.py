@@ -5,7 +5,11 @@ from config import TOMTOM_API_KEY
 
 class BaseRoute:
     def __init__(self, start_coordinates, end_coordinates):
-        self.params = {'key': TOMTOM_API_KEY, 'extendedRouteRepresentation': 'distance'}
+        self.params = {
+            'key': TOMTOM_API_KEY,
+            'extendedRouteRepresentation': 'distance',
+            'instructionsType': 'coded',
+        }
         self.start_coordinates = start_coordinates
         self.end_coordinates = end_coordinates
 

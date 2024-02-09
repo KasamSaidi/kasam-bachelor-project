@@ -37,7 +37,7 @@
 
     <h2>Verkehrsflussinformation:</h2>
     {% if traffic_flow_data %}
-        <p><strong>Verkehrsflussinformation:</strong> {{ traffic_flow_data.currentTravelTime }} Minuten, Geschwindigkeit: {{ traffic_flow_data.currentSpeed }} km/h</p>
+        <p><strong>Verkehrsflussinformation:</strong> {{ traffic_flow_data }}</p>
     {% else %}
         <p>Keine Verkehrsflussinformation verfügbar.</p>
     {% endif %}

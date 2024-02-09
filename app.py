@@ -9,7 +9,7 @@ from wtforms import StringField, validators, PasswordField
 from flask_wtf import FlaskForm
 
 # from routing.elevation import get_elevation_data
-from routing.traffic import get_traffic_flow
+from routing.traffic import get_traffic_flow, select_traffic_points
 from routing.routing_processing import create_route_instance, geocode_location
 from profile.vehicle import Vehicle
 from input import bcrypt_passwords
@@ -160,7 +160,8 @@ def calculate_route_handler():
             geojson_data, route_data = route_instance.calculate_route()
             eco_geojson_data, eco_route_data = eco_route_instance.calculate_route()
 
-            traffic_flow_data = get_traffic_flow(route_data['routes'][0]['legs'][0]['points'])
+            traffic_points = select_traffic_points(route_data)
+            traffic_flow_data = get_traffic_flow(traffic_points)  # Für Eco-Routing auch
 
             # get_elevation_data(route_data)
 
