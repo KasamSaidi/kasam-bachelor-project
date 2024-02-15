@@ -147,28 +147,14 @@ def remove_badges(username):
 @app.route('/routing')
 @is_logged_in
 def routing_input_handler():
-    return render_template('routing.html', vehicle_entries=Vehicle.get_vehicles)
+    return render_template('routing.html', vehicle_entries=Vehicle.get_vehicles())
 
 @app.route('/add_custom_car', methods=['GET', 'POST'])
 @is_logged_in
 def add_custom_car():
     if request.method == 'POST':
-        # custom_manufacturer = request.form.get('custom_manufacturer')
-        # custom_model = request.form.get('custom_model')
-        # custom_fuel_type = request.form.get('custom_fuel_type')
-        # custom_model_desc = request.form.get('custom_model_desc')
-
-        # custom_car_entry = Vehicle(
-        #     model=custom_model,
-        #     manufacturer=custom_manufacturer,
-        #     desc=custom_model_desc,
-        #     fuel_type=custom_fuel_type,
-        # )
-        # vehicle_entries.append(custom_car_entry)
         Vehicle.add_vehicles(request)
-
         return redirect(url_for('routing_input_handler'))
-
     return render_template('add_custom_car.html')
 
 @app.route('/calculate_route', methods=['POST'])
@@ -179,7 +165,7 @@ def calculate_route_handler():
         end_location = request.form.get('end_location')
 
         selected_vehicle_str = request.form.get('select_vehicle')
-        selected_vehicle = Vehicle.get_object_from_str(Vehicle.get_vehicles, selected_vehicle_str)
+        selected_vehicle = Vehicle.get_object_from_str(Vehicle.get_vehicles(), selected_vehicle_str)
 
         start_coordinates, start_address = geocode_location(start_location)
         end_coordinates, end_address = geocode_location(end_location)

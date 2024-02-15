@@ -32,7 +32,7 @@ def webapp_user_session(webapp_user_id):
     global user_id
     user_id = webapp_user_id
 
-class FuelType(TypeDecorator):
+class FuelType(TypeDecorator):  # Noch aktivieren
     impl = String
 
     def process_bind_param(self, value, dialect):
@@ -79,7 +79,8 @@ class Vehicle(Base):
         session.commit()
 
     def get_vehicles():
-        return session.query(Vehicle).all()
+        vehicles = session.query(Vehicle).all()
+        return vehicles
 
     def get_object_from_str(vehicles, select_vehicle_str):
         for vehicle in vehicles:
