@@ -11,16 +11,17 @@ from flask_wtf import FlaskForm
 # from routing.elevation import get_elevation_data
 from routing.traffic import get_traffic_flow, select_traffic_points
 from routing.routing_processing import create_route_instance, geocode_location
-from profile.vehicle import Vehicle
+# from profile.vehicle import Vehicle
 from input import bcrypt_passwords
 from mapper import orm_mapper
+from mapper.orm_mapper import Vehicle
 from login import login
 
 app = Flask(__name__)
 app.static_folder = 'static'
 
 file_path = os.path.abspath(os.getcwd()) + "\data.db"  # "\data.db"
-vehicle_entries = Vehicle.load_cars_from_excel('Euro_6_Latest.xlsx')
+# vehicle_entries = Vehicle.load_cars_from_excel('Euro_6_Latest.xlsx')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + file_path
 user_id = 0
 db = SQLAlchemy(app)
@@ -40,6 +41,7 @@ def setup():
         boolean = True
     orm_mapper.create_base(boolean)
     db.Model.metadata.create_all(bind=db.engine)
+    Vehicle.load_cars_from_excel("Euro_6_Latest.xlsx")
 
 def is_logged_in(func):
     @wraps(func)
@@ -145,24 +147,25 @@ def remove_badges(username):
 @app.route('/routing')
 @is_logged_in
 def routing_input_handler():
-    return render_template('routing.html', vehicle_entries=vehicle_entries)
+    return render_template('routing.html', vehicle_entries=Vehicle.get_vehicles)
 
 @app.route('/add_custom_car', methods=['GET', 'POST'])
 @is_logged_in
 def add_custom_car():
     if request.method == 'POST':
-        custom_manufacturer = request.form.get('custom_manufacturer')
-        custom_model = request.form.get('custom_model')
-        custom_fuel_type = request.form.get('custom_fuel_type')
-        custom_model_desc = request.form.get('custom_model_desc')
+        # custom_manufacturer = request.form.get('custom_manufacturer')
+        # custom_model = request.form.get('custom_model')
+        # custom_fuel_type = request.form.get('custom_fuel_type')
+        # custom_model_desc = request.form.get('custom_model_desc')
 
-        custom_car_entry = Vehicle(
-            model=custom_model,
-            manufacturer=custom_manufacturer,
-            desc=custom_model_desc,
-            fuel_type=custom_fuel_type,
-        )
-        vehicle_entries.append(custom_car_entry)
+        # custom_car_entry = Vehicle(
+        #     model=custom_model,
+        #     manufacturer=custom_manufacturer,
+        #     desc=custom_model_desc,
+        #     fuel_type=custom_fuel_type,
+        # )
+        # vehicle_entries.append(custom_car_entry)
+        Vehicle.add_vehicles(request)
 
         return redirect(url_for('routing_input_handler'))
 
@@ -176,7 +179,7 @@ def calculate_route_handler():
         end_location = request.form.get('end_location')
 
         selected_vehicle_str = request.form.get('select_vehicle')
-        selected_vehicle = Vehicle.get_object_from_str(vehicle_entries, selected_vehicle_str)
+        selected_vehicle = Vehicle.get_object_from_str(Vehicle.get_vehicles, selected_vehicle_str)
 
         start_coordinates, start_address = geocode_location(start_location)
         end_coordinates, end_address = geocode_location(end_location)
