@@ -11,6 +11,7 @@ from flask_wtf import FlaskForm
 # from routing.elevation import get_elevation_data
 from routing.traffic import get_traffic_flow, select_traffic_points
 from routing.routing_processing import create_route_instance, geocode_location
+from interface import hbefa_interface
 # from profile.vehicle import Vehicle
 from input import bcrypt_passwords
 from mapper import orm_mapper
@@ -20,7 +21,7 @@ from login import login
 app = Flask(__name__)
 app.static_folder = 'static'
 
-file_path = os.path.abspath(os.getcwd()) + "\data.db"  # "\data.db"
+file_path = os.path.abspath(os.getcwd()) + "\data.db"
 # vehicle_entries = Vehicle.load_cars_from_excel('Euro_6_Latest.xlsx')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + file_path
 user_id = 0
@@ -60,6 +61,12 @@ def logout():
     session.pop("username", None)
     flash("Successfully logged out!")
     return render_template("index.html")
+
+@app.route("/hbefa")
+def hbefa():
+    test = hbefa_interface.get_result_table("CO")
+    print(test)
+    return render_template("test.html")
 
 @app.route("/register")
 def add_user():
@@ -198,4 +205,5 @@ def calculate_route_handler():
 if __name__ == '__main__':
     SECRET_KEY = os.urandom(32)
     app.config['SECRET_KEY'] = SECRET_KEY
+    # app.run(debug=False)  # End Realese Debug False lassen
     app.run(debug=True)
