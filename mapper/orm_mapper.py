@@ -84,11 +84,6 @@ class Vehicle(Base):
         vehicles = session.query(Vehicle).all()
         return vehicles
 
-    def check_if_table_empty():
-        if session.query(Vehicle).first():
-            return True
-        return False
-
     def get_object_from_str(vehicles, select_vehicle_str):
         for vehicle in vehicles:
             vehicle_str = vehicle.manufacturer + ' ' + vehicle.model + ' ' + vehicle.desc
@@ -142,7 +137,7 @@ def get_total_points(username):
         total_points = session.query(Point).filter_by(user_id=user.id).first()
         session.refresh(user)
         return total_points.points
-    return 0
+    return
 
 def get_user_badges(username):
     user = session.query(User).filter_by(name=username).first()
@@ -150,7 +145,7 @@ def get_user_badges(username):
         user_badges = [badge.badge_name for badge in user.badges]
         session.refresh(user)
         return user_badges
-    return []
+    return
 
 def add_points(username, points):
     user = session.query(User).filter_by(name=username).first()
@@ -200,6 +195,11 @@ def remove_user_badge(username, badge_name):
             session.delete(badge_to_remove)
             session.commit()
     session.refresh(user)
+
+def check_if_table_empty(table):
+    if session.query(table).first():
+        return True
+    return False
 
 def stmt_results():
     result = session.execute(select(User.id, User.name, User.hashed_password))

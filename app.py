@@ -15,7 +15,7 @@ from interface import hbefa_interface
 # from profile.vehicle import Vehicle
 from input import bcrypt_passwords
 from mapper import orm_mapper
-from mapper.orm_mapper import Vehicle
+from mapper.orm_mapper import Vehicle, Point, Badge
 from login import login
 
 app = Flask(__name__)
@@ -124,6 +124,9 @@ def save_login_user() -> Union[Response, str]:
 @app.route('/user/<username>')
 @is_logged_in
 def user_profile(username):
+    if not orm_mapper.check_if_table_empty(Point) and not orm_mapper.check_if_table_empty(Badge):
+        orm_mapper.add_badge(username, badge_name="Registriert")
+        orm_mapper.add_points(username, points=0)
     total_points = orm_mapper.get_total_points(username)
     user_badges = orm_mapper.get_user_badges(username)
     return render_template('user_profile.html', total_points=total_points, badges=user_badges)
@@ -152,7 +155,7 @@ def remove_badges(username):
 @app.route('/routing')
 @is_logged_in
 def routing_input_handler():
-    if not Vehicle.check_if_table_empty():
+    if not orm_mapper.check_if_table_empty(Vehicle):
         Vehicle.load_cars_from_excel("Euro_6_Latest.xlsx")
     vehicle_entries = Vehicle.get_vehicles()
     return render_template('routing.html', vehicle_entries=vehicle_entries)
