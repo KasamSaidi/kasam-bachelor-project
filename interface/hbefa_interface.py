@@ -31,8 +31,14 @@ def get_result_table(concept):
         r'Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=C:\Users\User\Desktop\BACHELOR\HBEFA\hbefa64\HB42_DB_files_64bit\user\HBEFA42_User.MDB;'
     )
     cursor = dbconn.cursor()
-    tablename = concept_table_mapping.get(concept, "-")
-    sql = f'select * from "{tablename}"'
+    tablename = concept_table_mapping.get(concept, "CO")
+    # quieries für fuel_type und traffic status#+
+    sql = f'''
+    SELECT EFA_weighted
+    FROM "{tablename}"
+    WHERE (EmConcept = 'D' or EmConcept = 'B (4T)')
+    AND TrafficSit = 'Agglo/AB-Nat./80/dicht'
+    '''
     cursor.execute(sql)
     for row in cursor.fetchall():
         result.append(row)
