@@ -36,7 +36,7 @@ class FuelType(TypeDecorator):  # Noch aktivieren
     impl = String
 
     def process_bind_param(self, value, dialect):
-        if value not in ('petrol', 'diesel'):
+        if value not in ('Petrol', 'Diesel'):
             raise ValueError("Fuel type must be 'petrol' or 'diesel'")
         return value
 
@@ -47,11 +47,13 @@ class Vehicle(Base):
     manufacturer = Column(String)
     model = Column(String)
     desc = Column(String)
-    fuel_type = Column(String)
-    weight = Column(Integer, default=None)
+    fuel_type = Column(FuelType)
 
     def load_cars_from_excel(file_path):
         df = pd.read_excel(file_path)
+
+        accepted_fuel_types = ["Petrol", "Diesel"]
+        df = df.loc[df['Fuel Type'].isin(accepted_fuel_types)]
 
         for _, row in df.iterrows():
             vehicle = Vehicle(
@@ -81,6 +83,11 @@ class Vehicle(Base):
     def get_vehicles():
         vehicles = session.query(Vehicle).all()
         return vehicles
+
+    def check_if_table_empty():
+        if session.query(Vehicle).first():
+            return True
+        return False
 
     def get_object_from_str(vehicles, select_vehicle_str):
         for vehicle in vehicles:

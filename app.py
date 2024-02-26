@@ -22,7 +22,6 @@ app = Flask(__name__)
 app.static_folder = 'static'
 
 file_path = os.path.abspath(os.getcwd()) + "\data.db"
-# vehicle_entries = Vehicle.load_cars_from_excel('Euro_6_Latest.xlsx')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + file_path
 user_id = 0
 db = SQLAlchemy(app)
@@ -42,7 +41,6 @@ def setup():
         boolean = True
     orm_mapper.create_base(boolean)
     db.Model.metadata.create_all(bind=db.engine)
-    Vehicle.load_cars_from_excel("Euro_6_Latest.xlsx")
 
 def is_logged_in(func):
     @wraps(func)
@@ -154,7 +152,10 @@ def remove_badges(username):
 @app.route('/routing')
 @is_logged_in
 def routing_input_handler():
-    return render_template('routing.html', vehicle_entries=Vehicle.get_vehicles())
+    if not Vehicle.check_if_table_empty():
+        Vehicle.load_cars_from_excel("Euro_6_Latest.xlsx")
+    vehicle_entries = Vehicle.get_vehicles()
+    return render_template('routing.html', vehicle_entries=vehicle_entries)
 
 @app.route('/add_custom_car', methods=['GET', 'POST'])
 @is_logged_in
