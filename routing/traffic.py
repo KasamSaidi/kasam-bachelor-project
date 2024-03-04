@@ -7,6 +7,7 @@ excel_file = 'routing/traffic_situations.XLSX'
 
 def select_traffic_points(route_data):
     traffic_points = []
+    street_lengths = []
     for route in route_data['routes']:
         for instruction in route['guidance']['instructions']:
             point = {
@@ -14,12 +15,21 @@ def select_traffic_points(route_data):
                 'longitude': instruction['point']['longitude'],
                 'street': instruction.get('street', instruction.get('roadNumbers', 'N/A'))
             }
+            street_lengths.append(instruction['routeOffsetInMeters'])
             traffic_points.append(point)
-    return traffic_points
+    street_lengths = street_lenght_processing(street_lengths)
+    return traffic_points, street_lengths
+
+def street_lenght_processing(street_lengths):
+    calculated_length = []
+
+    for i in range(len(street_lengths)-1):
+        calculated_length.append(street_lengths[i+1] - street_lengths[i])
+    return calculated_length
 
 def traffic_flow_processing(frc_list, free_flow_speeds):
     frc_mapping = {
-        "FRC0": ("AB", "AB-City"),
+        "FRC0": ("AB-Nat.", "AB-City"),
         "FRC1": ("FernStr-Nat.",),
         "FRC2": ("FernStr-City", "HVS",),
         "FRC3": ("FernStr-City.", "HVS",),
@@ -58,9 +68,9 @@ def determine_traffic_status(street_types, speed_limits, current_speeds):
 
     for street_type, speed_limit, current_speed in zip(street_types, speed_limits, current_speeds):
         closest_pkw_speed = float('inf')
-        traffic_status = None
+        traffic_status = "dicht"
 
-        for index, row in agglo_rows.iterrows():
+        for _, row in agglo_rows.iterrows():
             ts_parts = row['TS'].split('/')
             if len(ts_parts) >= 4:
                 row_street_type = ts_parts[1]
@@ -74,7 +84,7 @@ def determine_traffic_status(street_types, speed_limits, current_speeds):
                         closest_pkw_speed = diff
                         traffic_status = row_traffic_status
 
-        traffic_flow.append({'street_type': street_type, 'speed_limit': speed_limit, 'current_speed': current_speed, 'traffic_status': traffic_status})
+        traffic_flow.append("Agglo" + "/" + street_type + "/" + str(speed_limit) + "/" + traffic_status)
     return traffic_flow
 
 def get_traffic_flow(points):

@@ -35,11 +35,18 @@
     <div id="map" class="map"></div>
     <button onclick="toggleLayer()">Routentyp Wechseln</button>
 
-    <h2>Verkehrsflussinformation:</h2>
-    {% if traffic_flow_data %}
-        <p><strong>Verkehrsflussinformation:</strong> {{ traffic_flow_data }}</p>
+    <h2>Emissionen:</h2>
+    {% if emissions %}
+        <p><strong>Emissionen:</strong> {{ emissions }}</p>
     {% else %}
-        <p>Keine Verkehrsflussinformation verfügbar.</p>
+        <p>Keine Emissionen verfügbar.</p>
+    {% endif %}
+    
+    <h2>Ecoemissionen:</h2>
+    {% if eco_emissions %}
+        <p><strong>Ecoemissionen:</strong> {{ eco_emissions }}</p>
+    {% else %}
+        <p>Keine Ecoemissionen verfügbar.</p>
     {% endif %}
 
     <script src="https://api.tomtom.com/maps-sdk-for-web/cdn/6.x/6.25.0/services/services-web.min.js"></script>

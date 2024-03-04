@@ -12,6 +12,7 @@ from flask_wtf import FlaskForm
 from routing.traffic import get_traffic_flow, select_traffic_points
 from routing.routing_processing import create_route_instance, geocode_location
 from interface import hbefa_interface
+from interface.emissions_calc import get_emissions
 # from profile.vehicle import Vehicle
 from input import bcrypt_passwords
 from mapper import orm_mapper
@@ -188,20 +189,30 @@ def calculate_route_handler():
             geojson_data, route_data = route_instance.calculate_route()
             eco_geojson_data, eco_route_data = eco_route_instance.calculate_route()
 
-            traffic_points = select_traffic_points(route_data)
-            traffic_flow_data = get_traffic_flow(traffic_points)  # Für Eco-Routing auch
+            traffic_points, street_lenghts = select_traffic_points(route_data)
+            traffic_flow_data = get_traffic_flow(traffic_points)
+
+            eco_traffic_points, eco_street_lenghts = select_traffic_points(eco_route_data)
+            eco_traffic_flow_data = get_traffic_flow(eco_traffic_points)
 
             # get_elevation_data(route_data)
+
+            fuel_type = "B (4T)"
+            if selected_vehicle.fuel_type == "Diesel":
+                fuel_type = "D"
+
+            emissions = get_emissions(fuel_type, traffic_flow_data, street_lenghts)
+            eco_emissions = get_emissions(fuel_type, eco_traffic_flow_data, eco_street_lenghts)
 
             return render_template('routing_result.html', start_location=start_address, end_location=end_address,
                                    start_coordinates=start_coordinates, end_coordinates=end_coordinates,
                                    geojson_data=geojson_data, route_data=route_data,
                                    eco_geojson_data=eco_geojson_data, eco_route_data=eco_route_data,
-                                   traffic_flow_data=traffic_flow_data, selected_vehicle=selected_vehicle)
+                                   emissions=emissions, eco_emissions=eco_emissions, selected_vehicle=selected_vehicle)
         else:
             return render_template('routing_result.html', start_location=start_address, end_location=end_address,
                                    start_coordinates=None, end_coordinates=None, geojson_data=None,
-                                   route_data=None, traffic_flow_data=None)
+                                   route_data=None, traffic_flow_data=None, emissions=None, eco_emissions=None)
     except Exception as e:
         print(f"Error calculating route: {e}")
         return jsonify({"error": "Error calculating route"}), 500

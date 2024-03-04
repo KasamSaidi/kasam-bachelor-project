@@ -14,7 +14,7 @@ def connect_to_hbefa():
         print(row)
         print("----------------------------------------------------------------------------------------------")
 
-def get_result_table(concept):
+def get_result_table(concept, fuel_type, traffic_situation):
     concept_table_mapping = {
         "CO": "EFA_HOT_Concept_CO_Ergebnisse",
         "CO2": "EFA_HOT_Concept_CO2_Rep_Ergebnisse",
@@ -32,15 +32,14 @@ def get_result_table(concept):
     )
     cursor = dbconn.cursor()
     tablename = concept_table_mapping.get(concept, "CO")
-    # quieries für fuel_type und traffic status#+
-    sql = f'''
+    sql = '''
     SELECT EFA_weighted
-    FROM "{tablename}"
-    WHERE (EmConcept = 'D' or EmConcept = 'B (4T)')
-    AND TrafficSit = 'Agglo/AB-Nat./80/dicht'
+    FROM {}
+    WHERE EmConcept = ?
+    AND TrafficSit = ?
     '''
-    cursor.execute(sql)
+    cursor.execute(sql.format(tablename), (fuel_type, traffic_situation))
     for row in cursor.fetchall():
-        result.append(row)
+        result.append(row.EFA_weighted)
     dbconn.close()
     return result
