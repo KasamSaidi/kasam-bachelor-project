@@ -13,7 +13,6 @@ from routing.traffic import get_traffic_flow, select_traffic_points
 from routing.routing_processing import create_route_instance, geocode_location
 from interface import hbefa_interface
 from interface.emissions_calc import get_emissions
-# from profile.vehicle import Vehicle
 from input import bcrypt_passwords
 from mapper import orm_mapper
 from mapper.orm_mapper import Vehicle, Point, Badge
@@ -179,12 +178,20 @@ def calculate_route_handler():
         selected_vehicle_str = request.form.get('select_vehicle')
         selected_vehicle = Vehicle.get_object_from_str(Vehicle.get_vehicles(), selected_vehicle_str)
 
-        start_coordinates, start_address = geocode_location(start_location)
+        start_coordinates, start_address = geocode_location(start_location)  # falls keine coordinaten nochmal fragen
         end_coordinates, end_address = geocode_location(end_location)
 
         if start_coordinates and end_coordinates:
-            eco_route_instance = create_route_instance(route_type='eco', start_coordinates=start_coordinates, end_coordinates=end_coordinates)
-            route_instance = create_route_instance(route_type='normal', start_coordinates=start_coordinates, end_coordinates=end_coordinates)
+            eco_route_instance = create_route_instance(
+                route_type='eco',
+                start_coordinates=start_coordinates,
+                end_coordinates=end_coordinates
+            )
+            route_instance = create_route_instance(
+                route_type='normal', 
+                start_coordinates=start_coordinates, 
+                end_coordinates=end_coordinates
+            )
 
             geojson_data, route_data = route_instance.calculate_route()
             eco_geojson_data, eco_route_data = eco_route_instance.calculate_route()
@@ -195,14 +202,12 @@ def calculate_route_handler():
             eco_traffic_points, eco_street_lenghts = select_traffic_points(eco_route_data)
             eco_traffic_flow_data = get_traffic_flow(eco_traffic_points)
 
-            # get_elevation_data(route_data)
-
             fuel_type = "B (4T)"
             if selected_vehicle.fuel_type == "Diesel":
                 fuel_type = "D"
 
             emissions = get_emissions(fuel_type, traffic_flow_data, street_lenghts)
-            eco_emissions = get_emissions(fuel_type, eco_traffic_flow_data, eco_street_lenghts)
+            eco_emissions = get_emissions(fuel_type, eco_traffic_flow_data, eco_street_lenghts)  # wenn emissionen nicht hoch genug unterschied dann kein punkte/route
 
             return render_template('routing_result.html', start_location=start_address, end_location=end_address,
                                    start_coordinates=start_coordinates, end_coordinates=end_coordinates,

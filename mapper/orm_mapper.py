@@ -10,7 +10,6 @@ from sqlalchemy import create_engine
 db_directory = "sqlite:///data.db"
 Base = declarative_base()
 
-# global user_id
 
 def create_base(boolean):
     if boolean:
@@ -32,7 +31,7 @@ def webapp_user_session(webapp_user_id):
     global user_id
     user_id = webapp_user_id
 
-class FuelType(TypeDecorator):  # Noch aktivieren
+class FuelType(TypeDecorator):
     impl = String
 
     def process_bind_param(self, value, dialect):

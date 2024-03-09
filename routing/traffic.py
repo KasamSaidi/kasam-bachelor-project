@@ -32,7 +32,7 @@ def traffic_flow_processing(frc_list, free_flow_speeds):
         "FRC0": ("AB-Nat.", "AB-City"),
         "FRC1": ("FernStr-Nat.",),
         "FRC2": ("FernStr-City", "HVS",),
-        "FRC3": ("FernStr-City.", "HVS",),
+        "FRC3": ("FernStr-City", "HVS",),
         "FRC4": ("Sammel", "Erschliessung"),
         "FRC5": ("Sammel", "Erschliessung"),
         "FRC6": ("Sammel", "Erschliessung"),
@@ -43,15 +43,29 @@ def traffic_flow_processing(frc_list, free_flow_speeds):
     for frc, free_flow_speed in zip(frc_list, free_flow_speeds):
         if free_flow_speed < 30:
             speed_limit = 30
+        elif free_flow_speed > 130:
+            speed_limit = 130
         else:
             speed_limit = ((free_flow_speed + 9) // 10) * 10
 
         road_types = frc_mapping.get(frc, ("Unknown",))
+
         if frc in ("FRC4", "FRC5", "FRC6") and speed_limit > 50:
             road_types = ("Sammel",)
 
         if frc in ("FRC2", "FRC3") and not (50 <= speed_limit <= 90):
             road_types = ("HVS",)
+
+        if frc in ("FRC1") and speed_limit < 70:
+            road_types = ("HVS",)
+
+        if frc in ("FRC0") and speed_limit > 110:
+            road_types = ("AB-Nat.",)
+
+        if frc in ("FRC0") and speed_limit < 80:
+            if speed_limit < 60 and free_flow_speed < 60:
+                road_types = ("FernStr-City",)
+            road_types = ("AB-City",)
 
         traffic_flow.extend([(road_type, speed_limit) for road_type in road_types])
         road_types = [item[0] for item in traffic_flow]

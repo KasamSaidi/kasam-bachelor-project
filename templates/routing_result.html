@@ -1,53 +1,71 @@
 {% extends 'index.html' %}
 {% block body %}
 <body>
-    <h1>Kasam's Routing - Ergebnisse</h1>
+    <div class="container">
+        <div class="info-box">
+            <h1>Routing - Info</h1>
 
-    <p><strong>Ihr Fahrzeug:</strong> {{ selected_vehicle.manufacturer + ' ' + selected_vehicle.model + ' ' + selected_vehicle.desc + ' Fuel Type:' + selected_vehicle.fuel_type}}</p>
-    <p><strong>Startort:</strong> {{ start_location }} (Koordinaten: {{ start_coordinates }})</p>
-    <p><strong>Zielort:</strong> {{ end_location }} (Koordinaten: {{ end_coordinates }})</p>
+            <p><strong>Ihr Fahrzeug:</strong> {{ selected_vehicle.manufacturer + ' ' + selected_vehicle.model + ' ' + selected_vehicle.desc + ' Kraftstoff: ' + selected_vehicle.fuel_type}}</p>
+            <p><strong>Startort:</strong> {{ start_location }}</p>
+            <p><strong>Zielort:</strong> {{ end_location }}</p>
 
-    {% if route_data.routes %}
-        <h2>Routeninformationen Normal:</h2>
-        <ul>
-            {% for leg in route_data.routes[0].legs %}
-                <li><strong>Entfernung:</strong> {{ leg.summary.lengthInMeters / 1000 }} km</li>
-                <li><strong>Dauer:</strong> {{ leg.summary.travelTimeInSeconds / 60 }} Minuten</li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p>Es konnte keine Route gefunden werden.</p>
-    {% endif %}
+            <div class="route-info">
+                <div class="normal-route-info">
+                    {% if route_data.routes %}
+                        <h2><strong>Routeninformationen Normal:</strong></h2>
+                        <ul>
+                            {% for leg in route_data.routes[0].legs %}
+                                <li><strong>Entfernung:</strong> {{ leg.summary.lengthInMeters / 1000 }} km</li>
+                                <li><strong>Dauer:</strong> {{ leg.summary.travelTimeInSeconds / 60 }} Minuten</li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p>Es konnte keine Route gefunden werden.</p>
+                    {% endif %}
+                </div>
 
-    {% if eco_route_data.routes %}
-        <h2>Routeninformationen Eco:</h2>
-        <ul>
-            {% for leg in eco_route_data.routes[0].legs %}
-                <li><strong>Entfernung:</strong> {{ leg.summary.lengthInMeters / 1000 }} km</li>
-                <li><strong>Dauer:</strong> {{ leg.summary.travelTimeInSeconds / 60 }} Minuten</li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p>Es konnte keine Route gefunden werden.</p>
-    {% endif %}
+                <div class="eco-route-info" style="display: none;">
+                    {% if eco_route_data.routes %}
+                        <h2><strong>Routeninformationen Eco:</strong> </h2>
+                        <ul>
+                            {% for leg in eco_route_data.routes[0].legs %}
+                                <li><strong>Entfernung:</strong> {{ leg.summary.lengthInMeters / 1000 }} km</li>
+                                <li><strong>Dauer:</strong> {{ leg.summary.travelTimeInSeconds / 60 }} Minuten</li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p>Es konnte keine Route gefunden werden.</p>
+                    {% endif %}
+                </div>
+            </div>
 
-    <h2>Map:</h2> 
-    <div id="map" class="map"></div>
-    <button onclick="toggleLayer()">Routentyp Wechseln</button>
+            <div class="emission-info">
+                <div class="normal-emission-info">
+                    <h2><strong>Emissionen:</strong></h2>
+                    {% if emissions %}
+                        <p><strong>Emissionen:</strong> {{ emissions }}</p>
+                    {% else %}
+                        <p>Keine Emissionen verfügbar.</p>
+                    {% endif %}
+                </div>
 
-    <h2>Emissionen:</h2>
-    {% if emissions %}
-        <p><strong>Emissionen:</strong> {{ emissions }}</p>
-    {% else %}
-        <p>Keine Emissionen verfügbar.</p>
-    {% endif %}
-    
-    <h2>Ecoemissionen:</h2>
-    {% if eco_emissions %}
-        <p><strong>Ecoemissionen:</strong> {{ eco_emissions }}</p>
-    {% else %}
-        <p>Keine Ecoemissionen verfügbar.</p>
-    {% endif %}
+                <div class="eco-emission-info" style="display: none;">
+                    <h2><strong>Ecoemissionen:</strong></h2>
+                    {% if eco_emissions %}
+                        <p><strong>Emissionen:</strong> {{ eco_emissions }}</p>
+                    {% else %}
+                        <p>Keine Emissionen verfügbar.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="map-container">
+            <h2>Map:</h2> 
+            <div id="map" class="map"></div>
+            <button onclick="toggleLayer()">Routentyp Wechseln</button>
+        </div>
+    </div>
 
     <script src="https://api.tomtom.com/maps-sdk-for-web/cdn/6.x/6.25.0/services/services-web.min.js"></script>
     <script src="https://api.tomtom.com/maps-sdk-for-web/cdn/6.x/6.25.0/maps/maps-web.min.js"></script>
@@ -56,4 +74,5 @@
         var ecoJson = {{ eco_geojson_data|safe }};
     </script>
     <script src="static/js/script.js"></script>
+</body>
 {% endblock %}

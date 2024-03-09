@@ -39,6 +39,24 @@ map.on('load', function () {
 });
 
 function toggleLayer() {
+    var normalRouteInfo = document.querySelector('.normal-route-info');
+    var ecoRouteInfo = document.querySelector('.eco-route-info');
+    var normalEmissionInfo = document.querySelector('.normal-emission-info');
+    var ecoEmissionInfo = document.querySelector('.eco-emission-info');
+
+    if (isNormalLayerVisible) {
+        normalRouteInfo.style.display = 'none';
+        normalEmissionInfo.style.display = 'none';
+        ecoRouteInfo.style.display = 'block';
+        ecoEmissionInfo.style.display = 'block';
+        isNormalLayerVisible = false;
+    } else {
+        normalRouteInfo.style.display = 'block';
+        normalEmissionInfo.style.display = 'block';
+        ecoRouteInfo.style.display = 'none';
+        ecoEmissionInfo.style.display = 'none';
+        isNormalLayerVisible = true;
+    }
     if (map.getLayer('route-layer')) {
         map.removeLayer('route-layer')
         map.addLayer({
