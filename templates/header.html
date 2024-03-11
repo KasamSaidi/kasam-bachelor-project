@@ -1,6 +1,10 @@
 <header class="header navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container-fluid">
-        <a class="navbar-brand" href="{{url_for('index')}}">Kasam Home</a>
+        {% if session['username'] is defined and session['username']|length %}
+            <a class="navbar-brand" href="{{url_for('user_homepage', username=session['username'])}}">Home</a>
+        {% else %}
+            <a class="navbar-brand" href="{{url_for('index')}}">Home</a>
+        {% endif %}
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
@@ -9,11 +13,10 @@
                 {% if session['username'] is defined and session['username']|length %}
                     <a class="nav-link" href="{{url_for('logout')}}">Logout</a>
                     <a class="nav-link" href="{{url_for('routing_input_handler')}}">Routing</a>
-                    <a class="nav-link" href="{{ url_for('user_profile', username=session['username']) }}">User Profile</a>
+                    <a class="nav-link" href="{{ url_for('leaderboard', username=session['username']) }}">Leaderboard</a>
                 {% else %}
                     <a class="nav-link" href="{{url_for('login_user')}}">Login</a>
                     <a class="nav-link" href="{{url_for('add_user')}}">Register</a>
-                    <a class="nav-link" href="{{url_for('hbefa')}}">HBEFA</a>
                 {% endif %}
             </div>
         </div>

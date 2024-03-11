@@ -35,4 +35,4 @@ class BaseRoute:
                     }
                     geojson['features'].append(feature)
             return geojson, route_data
-        return None
+        return None, None

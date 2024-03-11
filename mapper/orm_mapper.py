@@ -1,7 +1,7 @@
 from datetime import datetime
 import pandas as pd
 
-from sqlalchemy import Column, Integer, String, select, ForeignKey, DateTime
+from sqlalchemy import Column, Integer, String, select, ForeignKey, DateTime, func, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session, relationship
 from sqlalchemy.types import TypeDecorator
@@ -194,6 +194,12 @@ def remove_user_badge(username, badge_name):
             session.delete(badge_to_remove)
             session.commit()
     session.refresh(user)
+
+def get_leaderboard(username):
+    leaderboard = session.query(User, func.sum(Point.points).label('points_sum')).join(Point).group_by(User).order_by(text('points_sum DESC')).all()
+    user = session.query(User).filter_by(name=username).first()
+
+    return leaderboard, user
 
 def check_if_table_empty(table):
     if session.query(table).first():

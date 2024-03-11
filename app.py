@@ -8,10 +8,8 @@ from flask_sqlalchemy import SQLAlchemy
 from wtforms import StringField, validators, PasswordField
 from flask_wtf import FlaskForm
 
-# from routing.elevation import get_elevation_data
 from routing.traffic import get_traffic_flow, select_traffic_points
 from routing.routing_processing import create_route_instance, geocode_location
-from interface import hbefa_interface
 from interface.emissions_calc import get_emissions
 from input import bcrypt_passwords
 from mapper import orm_mapper
@@ -60,12 +58,6 @@ def logout():
     flash("Successfully logged out!")
     return render_template("index.html")
 
-@app.route("/hbefa")
-def hbefa():
-    test = hbefa_interface.get_result_table("CO")
-    print(test)
-    return render_template("test.html")
-
 @app.route("/register")
 def add_user():
     form = RegistrationForm()
@@ -97,6 +89,8 @@ def register_user() -> Union[Response, str]:
             orm_mapper.webapp_user_session(user_id)
             hashed_password = bcrypt_passwords.hash_password(password)
             orm_mapper.user_mapper(username, hashed_password)
+            orm_mapper.add_badge(username, "Registriert")
+            orm_mapper.add_points(username, 0)
             session["username"] = request.form["username"]
             break
 
@@ -112,6 +106,7 @@ def save_login_user() -> Union[Response, str]:
             orm_mapper.webapp_user_session(user_id)
             if login.password_verification(password, user_id):
                 session["username"] = request.form["username"]
+                user_points = orm_mapper.get_total_points(session["username"])
                 break
             else:
                 flash("Falsches Passwort, versuchen Sie es erneut")
@@ -119,7 +114,14 @@ def save_login_user() -> Union[Response, str]:
         else:
             flash("Kein Nutzer unter diesem Namen existiert, versuchen Sie es erneut.")
             return redirect(url_for('login_user'))
-    return render_template("user_dashboard.html", the_username=username)
+    return render_template("user_dashboard.html", the_username=username, user_points=user_points)
+
+@app.route("/user/<username>")
+@is_logged_in
+def user_homepage(username):
+    username = session["username"]
+    user_points = orm_mapper.get_total_points(session["username"])
+    return render_template("user_dashboard.html", the_username=username, user_points=user_points)
 
 @app.route('/user/<username>')
 @is_logged_in
@@ -152,6 +154,12 @@ def remove_badges(username):
     orm_mapper.remove_user_badge(username, badge_name_to_remove)
     return redirect(url_for('user_profile', username=username))
 
+@app.route('/user/<username>/leaderboard')
+@is_logged_in
+def leaderboard(username):
+    leaderboard, user = orm_mapper.get_leaderboard(username)
+    return render_template('leaderboard.html', leaderboard=leaderboard, logged_in_user=user)
+
 @app.route('/routing')
 @is_logged_in
 def routing_input_handler():
@@ -178,49 +186,58 @@ def calculate_route_handler():
         selected_vehicle_str = request.form.get('select_vehicle')
         selected_vehicle = Vehicle.get_object_from_str(Vehicle.get_vehicles(), selected_vehicle_str)
 
-        start_coordinates, start_address = geocode_location(start_location)  # falls keine coordinaten nochmal fragen
+        start_coordinates, start_address = geocode_location(start_location)
         end_coordinates, end_address = geocode_location(end_location)
 
         if start_coordinates and end_coordinates:
-            eco_route_instance = create_route_instance(
-                route_type='eco',
-                start_coordinates=start_coordinates,
-                end_coordinates=end_coordinates
-            )
-            route_instance = create_route_instance(
-                route_type='normal', 
-                start_coordinates=start_coordinates, 
-                end_coordinates=end_coordinates
-            )
+            geojson_data, route_data = determine_route("normal", start_coordinates, end_coordinates)
+            eco_geojson_data, eco_route_data = determine_route("eco", start_coordinates, end_coordinates)
 
-            geojson_data, route_data = route_instance.calculate_route()
-            eco_geojson_data, eco_route_data = eco_route_instance.calculate_route()
+            traffic_flow_data, street_lenghts = determine_traffic(route_data)
+            eco_traffic_flow_data, eco_street_lenghts = determine_traffic(eco_route_data)
 
-            traffic_points, street_lenghts = select_traffic_points(route_data)
-            traffic_flow_data = get_traffic_flow(traffic_points)
-
-            eco_traffic_points, eco_street_lenghts = select_traffic_points(eco_route_data)
-            eco_traffic_flow_data = get_traffic_flow(eco_traffic_points)
-
-            fuel_type = "B (4T)"
-            if selected_vehicle.fuel_type == "Diesel":
-                fuel_type = "D"
-
-            emissions = get_emissions(fuel_type, traffic_flow_data, street_lenghts)
-            eco_emissions = get_emissions(fuel_type, eco_traffic_flow_data, eco_street_lenghts)  # wenn emissionen nicht hoch genug unterschied dann kein punkte/route
+            emissions = determine_emissions(traffic_flow_data, street_lenghts, selected_vehicle)
+            eco_emissions = determine_emissions(eco_traffic_flow_data, eco_street_lenghts, selected_vehicle)
 
             return render_template('routing_result.html', start_location=start_address, end_location=end_address,
-                                   start_coordinates=start_coordinates, end_coordinates=end_coordinates,
                                    geojson_data=geojson_data, route_data=route_data,
                                    eco_geojson_data=eco_geojson_data, eco_route_data=eco_route_data,
                                    emissions=emissions, eco_emissions=eco_emissions, selected_vehicle=selected_vehicle)
         else:
             return render_template('routing_result.html', start_location=start_address, end_location=end_address,
-                                   start_coordinates=None, end_coordinates=None, geojson_data=None,
-                                   route_data=None, traffic_flow_data=None, emissions=None, eco_emissions=None)
+                                   geojson_data=None,route_data=None, emissions=None,
+                                   eco_emissions=None, selected_vehicle=None)
     except Exception as e:
         print(f"Error calculating route: {e}")
-        return jsonify({"error": "Error calculating route"}), 500
+        flash("Zu Ihrem gewünschten Start und Ziel Punkt, konnte keine Route ermittelt werden, versuchen sie es erneut.")
+        return redirect(url_for('routing_input_handler'))
+
+def determine_route(route_type, start_coordinates, end_coordinates):
+    route_instance = create_route_instance(
+        route_type=route_type,
+        start_coordinates=start_coordinates,
+        end_coordinates=end_coordinates
+    )
+
+    geojson_data, route_data = route_instance.calculate_route()
+
+    return geojson_data, route_data
+
+def determine_traffic(route_data):
+    traffic_points, street_lenghts = select_traffic_points(route_data)
+    traffic_flow_data = get_traffic_flow(traffic_points)
+
+    return traffic_flow_data, street_lenghts
+
+def determine_emissions(traffic_flow_data, street_lenghts, selected_vehicle):
+    fuel_type = "B (4T)"
+    if selected_vehicle.fuel_type == "Diesel":
+        fuel_type = "D"
+
+    # wenn emissionen nicht hoch genug unterschied dann kein punkte/route
+    emissions = get_emissions(fuel_type, traffic_flow_data, street_lenghts)
+
+    return emissions
 
 if __name__ == '__main__':
     SECRET_KEY = os.urandom(32)

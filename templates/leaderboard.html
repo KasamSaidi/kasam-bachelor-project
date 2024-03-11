@@ -1,0 +1,26 @@
+{% extends 'index.html' %}
+{% block body %}
+<body>
+    <h1 class="text-center mt-5 mb-4">Leaderboard</h1>
+    <div class="container">
+        <table class="table table-striped">
+            <thead class="thead-dark">
+                <tr>
+                    <th class="col-1">Platzierung</th>
+                    <th class="col-4">Nutzername</th>
+                    <th class="col-1">Punkte</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user, points_sum in leaderboard %}
+                    <tr {% if logged_in_user and user.id == logged_in_user.id %}class="highlight"{% endif %}>
+                        <td>{{ loop.index }}</td>
+                        <td>{{ user.name }}</td>
+                        <td>{{ points_sum }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+{% endblock %}

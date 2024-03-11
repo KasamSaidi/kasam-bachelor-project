@@ -1,5 +1,28 @@
 {% extends 'index.html' %}
+
 {% block body %}
-<h5 class="title">Hallo, {{ the_username }}</h5>
-<p class="text">Willkommen auf meiner Seite.</p>
+<div class="container">
+    <div class="row justify-content-center mt-4">
+      <div class="col-md-8">
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">Willkommen auf Ihrer Startseite, {{ the_username }}!</h5>
+            <p class="card-text">Hier kommt eine kurze Erklärung darüber, was die Anwendung macht und wie sie benutzt werden kann.</p>
+            <a href="#" class="card-link">Weitere Informationen</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  
+    <div class="row justify-content-center mt-4">
+      <div class="col-md-8">
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">Aktuelle Punktzahl</h5>
+            <p class="card-text">{{ user_points }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 {% endblock %}

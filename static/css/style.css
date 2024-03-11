@@ -8,6 +8,7 @@ body {
 
 .container {
     display: flex;
+    justify-content: center;
 }
 
 .info-box {
@@ -93,4 +94,9 @@ body {
     color: #fff;
     text-align: center;
     padding: 10px 0;
+}
+
+.highlight {
+    font-weight: bold;
+    color: green;
 }
