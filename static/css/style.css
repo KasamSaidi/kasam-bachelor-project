@@ -100,3 +100,10 @@ body {
     font-weight: bold;
     color: green;
 }
+
+.btn-group {
+    display: flex;
+}
+.btn-group button {
+    margin-right: 5px;
+}

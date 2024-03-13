@@ -99,10 +99,44 @@ class User(Base):
 
     points = relationship("Point", back_populates="user")
     badges = relationship("Badge", back_populates="user")
+    statistics = relationship("Statistic", back_populates="user")
 
     def __init__(self, name: str, password: str):
         self.name = name
         self.hashed_password = password
+
+        self.create_default_statistics()
+
+    def create_default_statistics(self):
+
+        if not self.statistics:
+
+            default_statistics = Statistic(
+                user=self,
+                routes_driven=0,
+                eco_routes_driven=0,
+                saved_emissions=0,
+                km_driven=0
+            )
+            session.add(default_statistics)
+            session.commit()
+
+    def modify_statistics(self, routes_driven=None, eco_routes_driven=None, saved_emissions=None, km_driven=None):
+        if not self.statistics:
+            raise ValueError("User has no statistics.")
+
+        user_statistics = self.statistics[0]
+
+        if routes_driven is not None:
+            user_statistics.routes_driven += routes_driven
+        if eco_routes_driven is not None:
+            user_statistics.eco_routes_driven += eco_routes_driven
+        if saved_emissions is not None:
+            user_statistics.saved_emissions += saved_emissions
+        if km_driven is not None:
+            user_statistics.km_driven += km_driven
+
+        session.commit()
 
 class Point(Base):
     __tablename__ = 'points'
@@ -120,9 +154,29 @@ class Badge(Base):
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey('user.id'))
     badge_name = Column(String)
+    description = Column(String)
     timestamp = Column(DateTime, nullable=False)
 
     user = relationship("User", back_populates="badges")
+
+class Statistic(Base):
+    __tablename__ = 'statistics'
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey('user.id'))
+    routes_driven = Column(Integer)
+    eco_routes_driven = Column(Integer)
+    saved_emissions = Column(Integer)
+    km_driven = Column(Integer)
+
+    user = relationship("User", back_populates="statistics")
+
+    def __init__(self, user: None, routes_driven: int, eco_routes_driven: int, saved_emissions: int, km_driven: int):
+        self.user = user
+        self.routes_driven = routes_driven
+        self.eco_routes_driven = eco_routes_driven
+        self.saved_emissions = saved_emissions
+        self.km_driven = km_driven
 
 def user_mapper(name, password):
     user_mapper.user = User(name, password)
@@ -137,6 +191,22 @@ def get_total_points(username):
         session.refresh(user)
         return total_points.points
     return
+
+def get_stats(username):
+    user = session.query(User).filter_by(name=username).first()
+    if user:
+        statistic = session.query(Statistic).filter_by(user_id=user.id).first()
+        session.refresh(user)
+        return statistic
+    return
+
+def modify_stats(username, km, route_type, saved_emissions):
+    user = session.query(User).filter_by(name=username).first()
+    if route_type == 'normal':
+        user.modify_statistics(km_driven=km, routes_driven=1)
+    elif route_type == 'eco':       
+        user.modify_statistics(km_driven=km, eco_routes_driven=1, saved_emissions=saved_emissions)
+    session.refresh(user)
 
 def get_user_badges(username):
     user = session.query(User).filter_by(name=username).first()
@@ -159,7 +229,7 @@ def add_points(username, points):
 def add_badge(username, badge_name):
     user = session.query(User).filter_by(name=username).first()
     if user:
-        new_badge = Badge(user=user, badge_name=badge_name, timestamp=datetime.now())
+        new_badge = Badge(user=user, badge_name=badge_name, description=" ", timestamp=datetime.now())
         session.add(new_badge)
         session.commit()
         session.refresh(user)
@@ -181,7 +251,7 @@ def change_user_points(username, points_change):
 def add_user_badge(username, badge_name):
     user = session.query(User).filter_by(name=username).first()
     if user:
-        new_badge = Badge(user=user, badge_name=badge_name, timestamp=datetime.now())
+        new_badge = Badge(user=user, badge_name=badge_name, description=" ", timestamp=datetime.now())
         session.add(new_badge)
         session.commit()
     session.refresh(user)

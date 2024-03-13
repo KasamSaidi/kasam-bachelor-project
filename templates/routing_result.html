@@ -5,37 +5,25 @@
         <div class="info-box">
             <h1>Routing - Info</h1>
 
-            <p><strong>Ihr Fahrzeug:</strong> {{ selected_vehicle.manufacturer + ' ' + selected_vehicle.model + ' ' + selected_vehicle.desc + ' Kraftstoff: ' + selected_vehicle.fuel_type}}</p>
+            <p><strong>Ihr Fahrzeug:</strong> {{ selected_vehicle.manufacturer + ' ' + selected_vehicle.model + ' ' + selected_vehicle.desc}}</p>
             <p><strong>Startort:</strong> {{ start_location }}</p>
             <p><strong>Zielort:</strong> {{ end_location }}</p>
 
             <div class="route-info">
                 <div class="normal-route-info">
-                    {% if route_data.routes %}
-                        <h2><strong>Routeninformationen Normal:</strong></h2>
-                        <ul>
-                            {% for leg in route_data.routes[0].legs %}
-                                <li><strong>Entfernung:</strong> {{ leg.summary.lengthInMeters / 1000 }} km</li>
-                                <li><strong>Dauer:</strong> {{ leg.summary.travelTimeInSeconds / 60 }} Minuten</li>
-                            {% endfor %}
-                        </ul>
-                    {% else %}
-                        <p>Es konnte keine Route gefunden werden.</p>
-                    {% endif %}
+                    <h2><strong>Routeninformationen Normal:</strong></h2>
+                    <ul>
+                        <li><strong>Entfernung:</strong> {{ length_in_km }} km</li>
+                        <li><strong>Dauer:</strong> {{ travel_time }} Minuten</li>
+                    </ul>
                 </div>
 
                 <div class="eco-route-info" style="display: none;">
-                    {% if eco_route_data.routes %}
-                        <h2><strong>Routeninformationen Eco:</strong> </h2>
-                        <ul>
-                            {% for leg in eco_route_data.routes[0].legs %}
-                                <li><strong>Entfernung:</strong> {{ leg.summary.lengthInMeters / 1000 }} km</li>
-                                <li><strong>Dauer:</strong> {{ leg.summary.travelTimeInSeconds / 60 }} Minuten</li>
-                            {% endfor %}
-                        </ul>
-                    {% else %}
-                        <p>Es konnte keine Route gefunden werden.</p>
-                    {% endif %}
+                    <h2><strong>Routeninformationen Eco:</strong></h2>
+                    <ul>
+                        <li><strong>Entfernung:</strong> {{ eco_length_in_km }} km</li>
+                        <li><strong>Dauer:</strong> {{ eco_travel_time }} Minuten</li>
+                    </ul>
                 </div>
             </div>
 
@@ -57,13 +45,46 @@
                         <p>Keine Emissionen verfügbar.</p>
                     {% endif %}
                 </div>
+                <div class="saved-emission-info" style="display: none;">
+                    <h2><strong>Gesparte Emissionen:</strong></h2>
+                    <p><strong>Emissionen:</strong> {{ saved_emissions }}</p>
+                </div>
             </div>
+
+            <div class="modal fade" id="routeSelectionModal" tabindex="-1" role="dialog" aria-labelledby="routeSelectionModalLabel" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="routeSelectionModalLabel">Route auswählen</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <button type="button" class="btn btn-dark" onclick="selectRoute('normal', geoJson)">Normale Route</button>
+                            <button type="button" class="btn btn-dark" onclick="selectRoute('eco', ecoJson)">Eco Route</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button type="button" class="btn btn-dark" data-toggle="modal" data-target="#routeSelectionModal">
+                Route auswählen
+            </button>
+
         </div>
 
         <div class="map-container">
             <h2>Map:</h2> 
             <div id="map" class="map"></div>
-            <button onclick="toggleLayer()">Routentyp Wechseln</button>
+            <p></p>
+            <button class="btn btn btn-dark" onclick="toggleLayer()">Ansicht wechseln</button>
+            <button id="routeCompletionButton" class="btn btn-success" onclick="redirectToUserHomepage('{{ session['username'] }}')" type="button" style="display: none;">
+                Fahrt abschließen
+            </button>
+            <button id="routeCancelButton" class="btn btn-outline-dark" onclick="location.href='{{url_for('index')}}'" type="button" style="display: none;">
+                Fahrt abbrechen
+            </button>
         </div>
     </div>
 

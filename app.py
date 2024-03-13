@@ -3,7 +3,7 @@ from typing_extensions import Union
 from functools import wraps
 from werkzeug import Response
 
-from flask import Flask, render_template, request, jsonify, url_for, redirect, flash, session
+from flask import Flask, render_template, request, url_for, redirect, flash, session
 from flask_sqlalchemy import SQLAlchemy
 from wtforms import StringField, validators, PasswordField
 from flask_wtf import FlaskForm
@@ -120,8 +120,23 @@ def save_login_user() -> Union[Response, str]:
 @is_logged_in
 def user_homepage(username):
     username = session["username"]
+
+    if request:
+        #  if clause für calcualte route
+        route_info = session.get('route_info', {})
+        route_type = request.args.get('route_type')
+        if route_type == 'normal':
+            length_in_km = route_info.get('length_in_km')
+            saved_emissions = 0
+        else:
+            length_in_km = route_info.get('eco_length_in_km')
+            saved_emissions = route_info.get('saved_emissions')
+
+        orm_mapper.modify_stats(username, length_in_km, route_type, saved_emissions)
+
     user_points = orm_mapper.get_total_points(session["username"])
-    return render_template("user_dashboard.html", the_username=username, user_points=user_points)
+    statistics = orm_mapper.get_stats(session["username"])
+    return render_template("user_dashboard.html", the_username=username, user_points=user_points, statistics=statistics)
 
 @app.route('/user/<username>')
 @is_logged_in
@@ -185,28 +200,36 @@ def calculate_route_handler():
 
         selected_vehicle_str = request.form.get('select_vehicle')
         selected_vehicle = Vehicle.get_object_from_str(Vehicle.get_vehicles(), selected_vehicle_str)
+        selected_vehicle_str = selected_vehicle.manufacturer + ' ' + selected_vehicle.model + ' ' + selected_vehicle.desc
 
         start_coordinates, start_address = geocode_location(start_location)
         end_coordinates, end_address = geocode_location(end_location)
 
-        if start_coordinates and end_coordinates:
-            geojson_data, route_data = determine_route("normal", start_coordinates, end_coordinates)
-            eco_geojson_data, eco_route_data = determine_route("eco", start_coordinates, end_coordinates)
+        geojson_data, route_data = determine_route("normal", start_coordinates, end_coordinates)
+        eco_geojson_data, eco_route_data = determine_route("eco", start_coordinates, end_coordinates)
 
-            traffic_flow_data, street_lenghts = determine_traffic(route_data)
-            eco_traffic_flow_data, eco_street_lenghts = determine_traffic(eco_route_data)
+        length_in_km, travel_time = get_length_travel_time(route_data)
+        eco_length_in_km, eco_travel_time = get_length_travel_time(eco_route_data)
 
-            emissions = determine_emissions(traffic_flow_data, street_lenghts, selected_vehicle)
-            eco_emissions = determine_emissions(eco_traffic_flow_data, eco_street_lenghts, selected_vehicle)
+        traffic_flow_data, street_lengths = determine_traffic(route_data)
+        eco_traffic_flow_data, eco_street_lengths = determine_traffic(eco_route_data)
 
-            return render_template('routing_result.html', start_location=start_address, end_location=end_address,
-                                   geojson_data=geojson_data, route_data=route_data,
-                                   eco_geojson_data=eco_geojson_data, eco_route_data=eco_route_data,
-                                   emissions=emissions, eco_emissions=eco_emissions, selected_vehicle=selected_vehicle)
-        else:
-            return render_template('routing_result.html', start_location=start_address, end_location=end_address,
-                                   geojson_data=None,route_data=None, emissions=None,
-                                   eco_emissions=None, selected_vehicle=None)
+        emissions = determine_emissions(traffic_flow_data, street_lengths, selected_vehicle)
+        eco_emissions = determine_emissions(eco_traffic_flow_data, eco_street_lengths, selected_vehicle)
+        saved_emissions = calculate_saved_emissions(emissions, eco_emissions)
+
+        session['route_info'] = {
+            'length_in_km': length_in_km,
+            'eco_length_in_km': eco_length_in_km,
+            'saved_emissions': sum(saved_emissions.values()),
+        }
+
+        return render_template('routing_result.html', start_location=start_address, end_location=end_address,
+                                geojson_data=geojson_data, length_in_km=length_in_km, travel_time=travel_time,
+                                eco_geojson_data=eco_geojson_data, eco_length_in_km=eco_length_in_km,
+                                eco_travel_time=eco_travel_time, eco_emissions=eco_emissions,
+                                emissions=emissions, saved_emissions=saved_emissions,
+                                selected_vehicle=selected_vehicle)
     except Exception as e:
         print(f"Error calculating route: {e}")
         flash("Zu Ihrem gewünschten Start und Ziel Punkt, konnte keine Route ermittelt werden, versuchen sie es erneut.")
@@ -224,20 +247,31 @@ def determine_route(route_type, start_coordinates, end_coordinates):
     return geojson_data, route_data
 
 def determine_traffic(route_data):
-    traffic_points, street_lenghts = select_traffic_points(route_data)
+    traffic_points, street_lengths = select_traffic_points(route_data)
     traffic_flow_data = get_traffic_flow(traffic_points)
 
-    return traffic_flow_data, street_lenghts
+    return traffic_flow_data, street_lengths
 
-def determine_emissions(traffic_flow_data, street_lenghts, selected_vehicle):
+def get_length_travel_time(route_data):
+    length = route_data['routes'][0]['summary']['lengthInMeters'] / 1000
+    travel_time = route_data['routes'][0]['summary']['travelTimeInSeconds']
+    travel_time = round(travel_time / 60)
+
+    return length, travel_time
+
+def determine_emissions(traffic_flow_data, street_lengths, selected_vehicle):
     fuel_type = "B (4T)"
     if selected_vehicle.fuel_type == "Diesel":
         fuel_type = "D"
 
-    # wenn emissionen nicht hoch genug unterschied dann kein punkte/route
-    emissions = get_emissions(fuel_type, traffic_flow_data, street_lenghts)
+    emissions = get_emissions(fuel_type, traffic_flow_data, street_lengths)
 
     return emissions
+
+def calculate_saved_emissions(emissions, eco_emissions):
+    saved_emissions = {key: max(0, emissions[key] - eco_emissions.get(key, 0)) for key in emissions}
+
+    return saved_emissions
 
 if __name__ == '__main__':
     SECRET_KEY = os.urandom(32)

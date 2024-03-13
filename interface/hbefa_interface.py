@@ -23,7 +23,6 @@ def get_result_table(concept, fuel_type, traffic_situation):
         "Methan": "EFA_HOT_Concept_Methan_Ergebnisse",
         "mKr": "EFA_HOT_Concept_mKr_Ergebnisse",
         "Nox": "EFA_HOT_Concept_Nox_Ergebnisse",
-        "Pb": "EFA_HOT_Concept_Pb_Ergebnisse",
         "PM": "EFA_HOT_Concept_PM_Ergebnisse",
     }
     result = []

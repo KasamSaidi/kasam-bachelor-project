@@ -2,8 +2,8 @@ from .hbefa_interface import get_result_table
 
 def get_emissions(fuel_type, traffic_situations, street_lengths):
     emissions = []
-    emissions_dict = {"CO": 0, "CO2": 0, "FC": 0, "HC": 0,"Methan": 0, "mKr": 0, "Nox": 0, "Pb": 0, "PM": 0}
-    concepts = ["CO", "CO2", "FC", "HC","Methan", "mKr", "Nox", "Pb", "PM"]
+    emissions_dict = {"CO": 0, "CO2": 0, "FC": 0, "HC": 0,"Methan": 0, "mKr": 0, "Nox": 0, "PM": 0}
+    concepts = ["CO", "CO2", "FC", "HC","Methan", "mKr", "Nox", "PM"]
 
     for concept in concepts:
         for traffic_situation in traffic_situations:
