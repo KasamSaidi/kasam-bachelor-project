@@ -120,7 +120,7 @@ def save_login_user() -> Union[Response, str]:
 @is_logged_in
 def user_homepage(username):
     username = session["username"]
-
+    earned_badges = []
     if request:
         if request.referrer.endswith("/calculate_route"):
             route_info = session.get('route_info', {})
@@ -135,10 +135,11 @@ def user_homepage(username):
             orm_mapper.modify_stats(username, length_in_km, route_type, saved_emissions)
             new_km_driven, new_saved_emissions, new_eco_routes_driven = orm_mapper.get_stats(session["username"])
             orm_mapper.update_badges(username, new_km_driven, new_saved_emissions, new_eco_routes_driven)
+            earned_badges = orm_mapper.get_new_user_badges(username)
 
     user_points = orm_mapper.get_total_points(session["username"])
 
-    return render_template("user_dashboard.html", the_username=username, user_points=user_points)
+    return render_template("user_dashboard.html", the_username=username, user_points=user_points, badges=earned_badges)
 
 @app.route('/user/<username>')
 @is_logged_in

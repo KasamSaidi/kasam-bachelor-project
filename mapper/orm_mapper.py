@@ -267,13 +267,14 @@ def update_badges(username, km_driven, saved_emissions, eco_routes_driven):
     user.check_badges(distance_driven=km_driven, emissions_saved=saved_emissions, eco_routes_driven=eco_routes_driven)
     session.refresh(user)
 
-def get_user_badges(username):
+def get_new_user_badges(username):
     user = session.query(User).filter_by(name=username).first()
     if user:
-        user_badges = [badge.badge_name for badge in user.badges]
+        current_time = datetime.now()
+        user_badges = [badge.badge_name for badge in user.badges if (current_time - badge.timestamp).total_seconds() <= 30]
         session.refresh(user)
         return user_badges
-    return
+    return []
 
 def add_points(username, points):
     user = session.query(User).filter_by(name=username).first()
@@ -295,34 +296,34 @@ def add_badge(username, badge_name, description):
         return True
     return False
 
-def change_user_points(username, points_change):
-    user = session.query(User).filter_by(name=username).first()
-    if user:
-        user_points = session.query(Point).filter_by(user_id=user.id).first()
-        if user_points:
-            user_points.points += points_change
-        else:
-            new_point = Point(user=user, points=points_change, timestamp=datetime.now())
-            session.add(new_point)
-        session.commit()
-    session.refresh(user)
+# def change_user_points(username, points_change):
+#     user = session.query(User).filter_by(name=username).first()
+#     if user:
+#         user_points = session.query(Point).filter_by(user_id=user.id).first()
+#         if user_points:
+#             user_points.points += points_change
+#         else:
+#             new_point = Point(user=user, points=points_change, timestamp=datetime.now())
+#             session.add(new_point)
+#         session.commit()
+#     session.refresh(user)
 
-def add_user_badge(username, badge_name):
-    user = session.query(User).filter_by(name=username).first()
-    if user:
-        new_badge = Badge(user=user, badge_name=badge_name, description=" ", timestamp=datetime.now())
-        session.add(new_badge)
-        session.commit()
-    session.refresh(user)
+# def add_user_badge(username, badge_name):
+#     user = session.query(User).filter_by(name=username).first()
+#     if user:
+#         new_badge = Badge(user=user, badge_name=badge_name, description=" ", timestamp=datetime.now())
+#         session.add(new_badge)
+#         session.commit()
+#     session.refresh(user)
 
-def remove_user_badge(username, badge_name):
-    user = session.query(User).filter_by(name=username).first()
-    if user:
-        badge_to_remove = session.query(Badge).filter_by(user_id=user.id, badge_name=badge_name).first()
-        if badge_to_remove:
-            session.delete(badge_to_remove)
-            session.commit()
-    session.refresh(user)
+# def remove_user_badge(username, badge_name):
+#     user = session.query(User).filter_by(name=username).first()
+#     if user:
+#         badge_to_remove = session.query(Badge).filter_by(user_id=user.id, badge_name=badge_name).first()
+#         if badge_to_remove:
+#             session.delete(badge_to_remove)
+#             session.commit()
+#     session.refresh(user)
 
 def get_leaderboard(username, filter):
     if filter == 'points':
