@@ -1,39 +1,28 @@
 {% extends 'index.html' %}
 
 {% block body %}
-<div class="container">
-    <div class="row justify-content-center mt-4">
-      <div class="col-md-8">
-        <div class="card">
-          <div class="card-body">
-            <h5 class="card-title">Willkommen auf Ihrer Startseite, {{ the_username }}!</h5>
-            <p class="card-text">Hier kommt eine kurze Erklärung darüber, was die Anwendung macht und wie sie benutzt werden kann.</p>
-            <a href="#" class="card-link">Weitere Informationen</a>
-          </div>
+<div class="container d-flex justify-content-center">
+  <div class="row justify-content-center mt-4">
+    <div class="col-md-8">
+        <div class="card-body">
+          <h5 class="card-title">Willkommen auf Ihrer Startseite, {{ the_username }}!</h5>
+          <p class="card-text">Mit Hilfe von Gamification können Sie auf der Seite die Umweltschonung fördern,
+            indem Sie die Routenfunktion verwenden und die Alternativen zu einer normalen Route anzeigen.
+            Sie haben die Möglichkeit, sich mit anderen zu Messen, Punkte zu erzielen und Abzeichen zu erwerben.
+            Über den Header oben gelangen Sie zu allen Funktionen.
+          </p>
         </div>
-      </div>
     </div>
-  
-    <div class="row justify-content-center mt-4">
-      <div class="col-md-8">
-        <div class="card">
-          <div class="card-body">
-            <h5 class="card-title">Aktuelle Punktzahl</h5>
-            <p class="card-text">{{ user_points }}</p>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="row justify-content-center mt-4">
-      <div class="col-md-8">
-        <div class="card">
-          <div class="card-body">
-            <h5 class="card-title">Statistiken</h5>
-            <p class="card-text">{{ statistics }}</p>
-          </div>
-        </div>
+  </div>
+</div>
+<div class="container d-flex">
+  <div class="row mt-4">
+    <div class="col-md-8">
+      <div class="card-body">
+        <h5 class="card-title">Aktuelle Punktzahl</h5>
+        <p class="card-text">{{ user_points }}</p>
       </div>
     </div>
   </div>
+</div>
 {% endblock %}

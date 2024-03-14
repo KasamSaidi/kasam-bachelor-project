@@ -138,6 +138,51 @@ class User(Base):
 
         session.commit()
 
+    def check_badges(self, distance_driven, emissions_saved, eco_routes_driven):
+        now = datetime.now()
+
+        badges = [
+            Badge(self, "Gefahrene Kilometer - Bronze", "Gefahrene Kilometer Stufe: Bronze", 10, now),
+            Badge(self, "Gefahrene Kilometer - Silber", "Gefahrene Kilometer Stufe: Silber", 100, now),
+            Badge(self, "Gefahrene Kilometer - Gold", "Gefahrene Kilometer Stufe: Gold", 1000, now),
+            Badge(self, "Gesparte Emissionen - Bronze", "Gesparte Emissionen (gramm) Stufe: Bronze", 10, now),
+            Badge(self, "Gesparte Emissionen - Silber", "Gesparte Emissionen (gramm) Stufe: Silber", 100, now),
+            Badge(self, "Gesparte Emissionen - Gold", "Gesparte Emissionen (gramm) Stufe: Gold", 1000, now),
+            Badge(self, "Eco Routen gefahren - Bronze", "Anzahl gefahrener Eco Routen Stufe: Bronze", 1, now),
+            Badge(self, "Eco Routen gefahren - Silber", "Anzahl gefahrener Eco Routen Stufe: Silber", 10, now),
+            Badge(self, "Eco Routen gefahren - Gold", "Anzahl gefahrener Eco Routen Stufe: Gold", 100, now),
+        ]
+
+        for badge in badges:
+            if "Gefahrene Kilometer" in badge.badge_name:
+                if distance_driven >= badge.milestones:
+                    existing_badge_names = [badge.badge_name for badge in self.badges]
+                    if badge.badge_name  in existing_badge_names:
+                        continue
+                    session.add(badge)
+                    session.commit()
+                    break
+
+        for badge in badges:
+            if "Gesparte Emissionen" in badge.badge_name:
+                if emissions_saved >= badge.milestones:
+                    existing_badge_names = [badge.badge_name for badge in self.badges]
+                    if badge.badge_name  in existing_badge_names:
+                        continue
+                    session.add(badge)
+                    session.commit()
+                    break
+
+        for badge in badges:
+            if "Eco Routen gefahren" in badge.badge_name:
+                if eco_routes_driven >= badge.milestones:
+                    existing_badge_names = [badge.badge_name for badge in self.badges]
+                    if badge.badge_name  in existing_badge_names:
+                        continue
+                    session.add(badge)
+                    session.commit()
+                    break
+
 class Point(Base):
     __tablename__ = 'points'
 
@@ -155,9 +200,17 @@ class Badge(Base):
     user_id = Column(Integer, ForeignKey('user.id'))
     badge_name = Column(String)
     description = Column(String)
+    milestones = Column(Integer)
     timestamp = Column(DateTime, nullable=False)
 
     user = relationship("User", back_populates="badges")
+
+    def __init__(self, user: None, badge_name: str, description: str, milestones: int, timestamp: datetime):
+        self.user = user
+        self.badge_name = badge_name
+        self.description = description
+        self.milestones = milestones
+        self.timestamp = timestamp
 
 class Statistic(Base):
     __tablename__ = 'statistics'
@@ -197,7 +250,7 @@ def get_stats(username):
     if user:
         statistic = session.query(Statistic).filter_by(user_id=user.id).first()
         session.refresh(user)
-        return statistic
+        return statistic.km_driven, statistic.saved_emissions, statistic.eco_routes_driven, 
     return
 
 def modify_stats(username, km, route_type, saved_emissions):
@@ -206,6 +259,12 @@ def modify_stats(username, km, route_type, saved_emissions):
         user.modify_statistics(km_driven=km, routes_driven=1)
     elif route_type == 'eco':       
         user.modify_statistics(km_driven=km, eco_routes_driven=1, saved_emissions=saved_emissions)
+    session.refresh(user)
+
+def update_badges(username, km_driven, saved_emissions, eco_routes_driven):
+    user = session.query(User).filter_by(name=username).first()
+    print(km_driven)
+    user.check_badges(distance_driven=km_driven, emissions_saved=saved_emissions, eco_routes_driven=eco_routes_driven)
     session.refresh(user)
 
 def get_user_badges(username):
@@ -226,10 +285,10 @@ def add_points(username, points):
         return True
     return False
 
-def add_badge(username, badge_name):
+def add_badge(username, badge_name, description):
     user = session.query(User).filter_by(name=username).first()
     if user:
-        new_badge = Badge(user=user, badge_name=badge_name, description=" ", timestamp=datetime.now())
+        new_badge = Badge(user=user, badge_name=badge_name, description=description, milestones=0, timestamp=datetime.now())
         session.add(new_badge)
         session.commit()
         session.refresh(user)
@@ -265,8 +324,18 @@ def remove_user_badge(username, badge_name):
             session.commit()
     session.refresh(user)
 
-def get_leaderboard(username):
-    leaderboard = session.query(User, func.sum(Point.points).label('points_sum')).join(Point).group_by(User).order_by(text('points_sum DESC')).all()
+def get_leaderboard(username, filter):
+    if filter == 'points':
+        leaderboard = session.query(User, func.sum(Point.points).label('value')).join(Point).group_by(User).order_by(text('value DESC')).all()
+    elif filter == 'routes_driven':
+        leaderboard = session.query(User, func.sum(Statistic.routes_driven).label('value')).join(Statistic).group_by(User).order_by(text('value DESC')).all()
+    elif filter == 'eco_routes_driven':
+        leaderboard = session.query(User, func.sum(Statistic.eco_routes_driven).label('value')).join(Statistic).group_by(User).order_by(text('value DESC')).all()
+    elif filter == 'saved_emissions':
+        leaderboard = session.query(User, func.sum(Statistic.saved_emissions).label('value')).join(Statistic).group_by(User).order_by(text('value DESC')).all()
+    else:
+        leaderboard = session.query(User, func.sum(Statistic.km_driven).label('value')).join(Statistic).group_by(User).order_by(text('value DESC')).all()
+
     user = session.query(User).filter_by(name=username).first()
 
     return leaderboard, user

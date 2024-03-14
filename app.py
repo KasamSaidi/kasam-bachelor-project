@@ -89,7 +89,7 @@ def register_user() -> Union[Response, str]:
             orm_mapper.webapp_user_session(user_id)
             hashed_password = bcrypt_passwords.hash_password(password)
             orm_mapper.user_mapper(username, hashed_password)
-            orm_mapper.add_badge(username, "Registriert")
+            orm_mapper.add_badge(username, "Registriert", "Sie haben sich registriert.")
             orm_mapper.add_points(username, 0)
             session["username"] = request.form["username"]
             break
@@ -122,21 +122,23 @@ def user_homepage(username):
     username = session["username"]
 
     if request:
-        #  if clause für calcualte route
-        route_info = session.get('route_info', {})
-        route_type = request.args.get('route_type')
-        if route_type == 'normal':
-            length_in_km = route_info.get('length_in_km')
-            saved_emissions = 0
-        else:
-            length_in_km = route_info.get('eco_length_in_km')
-            saved_emissions = route_info.get('saved_emissions')
+        if request.referrer.endswith("/calculate_route"):
+            route_info = session.get('route_info', {})
+            route_type = request.args.get('route_type')
+            if route_type == 'normal':
+                length_in_km = route_info.get('length_in_km')
+                saved_emissions = 0
+            else:
+                length_in_km = route_info.get('eco_length_in_km')
+                saved_emissions = route_info.get('saved_emissions')
 
-        orm_mapper.modify_stats(username, length_in_km, route_type, saved_emissions)
+            orm_mapper.modify_stats(username, length_in_km, route_type, saved_emissions)
+            new_km_driven, new_saved_emissions, new_eco_routes_driven = orm_mapper.get_stats(session["username"])
+            orm_mapper.update_badges(username, new_km_driven, new_saved_emissions, new_eco_routes_driven)
 
     user_points = orm_mapper.get_total_points(session["username"])
-    statistics = orm_mapper.get_stats(session["username"])
-    return render_template("user_dashboard.html", the_username=username, user_points=user_points, statistics=statistics)
+
+    return render_template("user_dashboard.html", the_username=username, user_points=user_points)
 
 @app.route('/user/<username>')
 @is_logged_in
@@ -169,11 +171,23 @@ def remove_badges(username):
     orm_mapper.remove_user_badge(username, badge_name_to_remove)
     return redirect(url_for('user_profile', username=username))
 
-@app.route('/user/<username>/leaderboard')
+@app.route('/user/<username>/leaderboard', methods=['GET', 'POST'])
 @is_logged_in
 def leaderboard(username):
-    leaderboard, user = orm_mapper.get_leaderboard(username)
-    return render_template('leaderboard.html', leaderboard=leaderboard, logged_in_user=user)
+    filter_criteria = request.args.get('filter_criteria')
+    leaderboard, user = orm_mapper.get_leaderboard(username, filter_criteria)
+
+    filter_title_mapping = {
+        'points': 'Punkte',
+        'routes_driven': 'Anzahl Fahrten',
+        'eco_routes_driven': 'Anzahl Eco Fahrten',
+        'saved_emissions': 'Gesparte Emissionen (g)',
+        'km_driven': 'Kilometer gefahren (km)'
+    }
+
+    filter_title = filter_title_mapping.get(filter_criteria, 'Wert')
+
+    return render_template('leaderboard.html', leaderboard=leaderboard, logged_in_user=user, filter_title=filter_title)
 
 @app.route('/routing')
 @is_logged_in

@@ -79,12 +79,14 @@
             <div id="map" class="map"></div>
             <p></p>
             <button class="btn btn btn-dark" onclick="toggleLayer()">Ansicht wechseln</button>
-            <button id="routeCompletionButton" class="btn btn-success" onclick="redirectToUserHomepage('{{ session['username'] }}')" type="button" style="display: none;">
-                Fahrt abschließen
-            </button>
-            <button id="routeCancelButton" class="btn btn-outline-dark" onclick="location.href='{{url_for('index')}}'" type="button" style="display: none;">
-                Fahrt abbrechen
-            </button>
+            <div class="button-group">
+                <button id="routeCompletionButton" class="btn btn-success" onclick="redirectToUserHomepage('{{ session['username'] }}')" type="button" style="display: none;">
+                    Fahrt abschließen
+                </button>
+                <button id="routeCancelButton" class="btn btn-outline-dark" onclick="location.href='{{url_for('index')}}'" type="button" style="display: none;">
+                    Fahrt abbrechen
+                </button>
+            </div>
         </div>
     </div>
 

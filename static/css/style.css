@@ -101,9 +101,11 @@ body {
     color: green;
 }
 
-.btn-group {
+.button-group {
     display: flex;
+    gap: 10px;
 }
-.btn-group button {
-    margin-right: 5px;
+
+.btn-width {
+    width: 150px;
 }
