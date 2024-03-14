@@ -138,19 +138,23 @@ class User(Base):
 
         session.commit()
 
-    def check_badges(self, distance_driven, emissions_saved, eco_routes_driven):
+    def check_badges(self, distance_driven, emissions_saved, eco_routes_driven, points):
         now = datetime.now()
 
         badges = [
-            Badge(self, "Gefahrene Kilometer - Bronze", "Gefahrene Kilometer Stufe: Bronze", 10, now),
-            Badge(self, "Gefahrene Kilometer - Silber", "Gefahrene Kilometer Stufe: Silber", 100, now),
-            Badge(self, "Gefahrene Kilometer - Gold", "Gefahrene Kilometer Stufe: Gold", 1000, now),
-            Badge(self, "Gesparte Emissionen - Bronze", "Gesparte Emissionen (gramm) Stufe: Bronze", 10, now),
-            Badge(self, "Gesparte Emissionen - Silber", "Gesparte Emissionen (gramm) Stufe: Silber", 100, now),
-            Badge(self, "Gesparte Emissionen - Gold", "Gesparte Emissionen (gramm) Stufe: Gold", 1000, now),
-            Badge(self, "Eco Routen gefahren - Bronze", "Anzahl gefahrener Eco Routen Stufe: Bronze", 1, now),
-            Badge(self, "Eco Routen gefahren - Silber", "Anzahl gefahrener Eco Routen Stufe: Silber", 10, now),
-            Badge(self, "Eco Routen gefahren - Gold", "Anzahl gefahrener Eco Routen Stufe: Gold", 100, now),
+            Badge(self, "Gefahrene Kilometer - Bronze", "10 gefahrene Kilometer | Stufe: Bronze", 10, now),
+            Badge(self, "Gefahrene Kilometer - Silber", "100 gefahrene Kilometer | Stufe: Silber", 100, now),
+            Badge(self, "Gefahrene Kilometer - Gold", "1000 gefahrene Kilometer | Stufe: Gold", 1000, now),
+            Badge(self, "Gesparte Emissionen - Bronze", "10g gesparte Emissionen | Stufe: Bronze", 10, now),
+            Badge(self, "Gesparte Emissionen - Silber", "100g gesparte Emissionen | Stufe: Silber", 100, now),
+            Badge(self, "Gesparte Emissionen - Gold", "1000g gesparte Emissionen | Stufe: Gold", 1000, now),
+            Badge(self, "Eco Routen gefahren - Bronze", "1 gefahrene Eco Route | Stufe: Bronze", 1, now),
+            Badge(self, "Eco Routen gefahren - Silber", "10 gefahrene Eco Routen | Stufe: Silber", 10, now),
+            Badge(self, "Eco Routen gefahren - Gold", "100 gefahrene Eco Routen | Stufe: Gold", 100, now),
+            Badge(self, "Punkte- Bronze", "100 verdiente Punkte | Stufe: Bronze", 100, now),
+            Badge(self, "Punkte - Silber", "1000 verdiente Punkte | Stufe: Silber", 1000, now),
+            Badge(self, "Punkte - Gold", "100000 verdiente Punkte | Stufe: Gold", 100000, now),
+            Badge(self, "Punkte - Platin", "1000000 verdiente Punkte | Stufe: Platin", 1000000, now),
         ]
 
         for badge in badges:
@@ -176,6 +180,16 @@ class User(Base):
         for badge in badges:
             if "Eco Routen gefahren" in badge.badge_name:
                 if eco_routes_driven >= badge.milestones:
+                    existing_badge_names = [badge.badge_name for badge in self.badges]
+                    if badge.badge_name  in existing_badge_names:
+                        continue
+                    session.add(badge)
+                    session.commit()
+                    break
+
+        for badge in badges:
+            if "Punkte" in badge.badge_name:
+                if points >= badge.milestones:
                     existing_badge_names = [badge.badge_name for badge in self.badges]
                     if badge.badge_name  in existing_badge_names:
                         continue
@@ -261,10 +275,9 @@ def modify_stats(username, km, route_type, saved_emissions):
         user.modify_statistics(km_driven=km, eco_routes_driven=1, saved_emissions=saved_emissions)
     session.refresh(user)
 
-def update_badges(username, km_driven, saved_emissions, eco_routes_driven):
+def update_badges(username, km_driven, saved_emissions, eco_routes_driven, points):
     user = session.query(User).filter_by(name=username).first()
-    print(km_driven)
-    user.check_badges(distance_driven=km_driven, emissions_saved=saved_emissions, eco_routes_driven=eco_routes_driven)
+    user.check_badges(distance_driven=km_driven, emissions_saved=saved_emissions, eco_routes_driven=eco_routes_driven, points=points)
     session.refresh(user)
 
 def get_new_user_badges(username):
@@ -276,15 +289,23 @@ def get_new_user_badges(username):
         return user_badges
     return []
 
+def get_user_badges(username):
+    user = session.query(User).filter_by(name=username).first()
+    if user:
+        return user.badges
+    return []
+
 def add_points(username, points):
     user = session.query(User).filter_by(name=username).first()
     if user:
-        new_point = Point(user=user, points=points, timestamp=datetime.now())
-        session.add(new_point)
+        user_points = session.query(Point).filter_by(user_id=user.id).first()
+        if user_points:
+            user_points.points += points
+        else:
+            new_point = Point(user=user, points=points, timestamp=datetime.now())
+            session.add(new_point)
         session.commit()
-        session.refresh(user)
-        return True
-    return False
+    session.refresh(user)
 
 def add_badge(username, badge_name, description):
     user = session.query(User).filter_by(name=username).first()
@@ -295,35 +316,6 @@ def add_badge(username, badge_name, description):
         session.refresh(user)
         return True
     return False
-
-# def change_user_points(username, points_change):
-#     user = session.query(User).filter_by(name=username).first()
-#     if user:
-#         user_points = session.query(Point).filter_by(user_id=user.id).first()
-#         if user_points:
-#             user_points.points += points_change
-#         else:
-#             new_point = Point(user=user, points=points_change, timestamp=datetime.now())
-#             session.add(new_point)
-#         session.commit()
-#     session.refresh(user)
-
-# def add_user_badge(username, badge_name):
-#     user = session.query(User).filter_by(name=username).first()
-#     if user:
-#         new_badge = Badge(user=user, badge_name=badge_name, description=" ", timestamp=datetime.now())
-#         session.add(new_badge)
-#         session.commit()
-#     session.refresh(user)
-
-# def remove_user_badge(username, badge_name):
-#     user = session.query(User).filter_by(name=username).first()
-#     if user:
-#         badge_to_remove = session.query(Badge).filter_by(user_id=user.id, badge_name=badge_name).first()
-#         if badge_to_remove:
-#             session.delete(badge_to_remove)
-#             session.commit()
-#     session.refresh(user)
 
 def get_leaderboard(username, filter):
     if filter == 'points':

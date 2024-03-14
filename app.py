@@ -121,6 +121,7 @@ def save_login_user() -> Union[Response, str]:
 def user_homepage(username):
     username = session["username"]
     earned_badges = []
+    points = 0
     if request:
         if request.referrer.endswith("/calculate_route"):
             route_info = session.get('route_info', {})
@@ -131,15 +132,18 @@ def user_homepage(username):
             else:
                 length_in_km = route_info.get('eco_length_in_km')
                 saved_emissions = route_info.get('saved_emissions')
+                points = calculate_points(saved_emissions, length_in_km)
+                orm_mapper.add_points(username, points)
 
             orm_mapper.modify_stats(username, length_in_km, route_type, saved_emissions)
             new_km_driven, new_saved_emissions, new_eco_routes_driven = orm_mapper.get_stats(session["username"])
-            orm_mapper.update_badges(username, new_km_driven, new_saved_emissions, new_eco_routes_driven)
+            new_points = orm_mapper.get_total_points(username)
+            orm_mapper.update_badges(username, new_km_driven, new_saved_emissions, new_eco_routes_driven, new_points)
             earned_badges = orm_mapper.get_new_user_badges(username)
 
-    user_points = orm_mapper.get_total_points(session["username"])
+    user_points = orm_mapper.get_total_points(username)
 
-    return render_template("user_dashboard.html", the_username=username, user_points=user_points, badges=earned_badges)
+    return render_template("user_dashboard.html", the_username=username, user_points=user_points, badges=earned_badges, points=points)
 
 @app.route('/user/<username>')
 @is_logged_in
@@ -189,6 +193,13 @@ def leaderboard(username):
     filter_title = filter_title_mapping.get(filter_criteria, 'Wert')
 
     return render_template('leaderboard.html', leaderboard=leaderboard, logged_in_user=user, filter_title=filter_title)
+
+@app.route('/user/<username>/badges')
+@is_logged_in
+def show_badges(username):
+    badges = orm_mapper.get_user_badges(username)
+
+    return render_template('badges.html', badges=badges)
 
 @app.route('/routing')
 @is_logged_in
@@ -288,8 +299,12 @@ def calculate_saved_emissions(emissions, eco_emissions):
 
     return saved_emissions
 
+def calculate_points(saved_emissions, route_length):
+    points = saved_emissions / route_length * 100
+
+    return round(points)
+
 if __name__ == '__main__':
     SECRET_KEY = os.urandom(32)
     app.config['SECRET_KEY'] = SECRET_KEY
-    # app.run(debug=False)  # End Realese Debug False lassen
-    app.run(debug=True)
+    app.run(debug=False)

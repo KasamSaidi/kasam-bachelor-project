@@ -1,0 +1,21 @@
+{% extends 'index.html' %}
+{% block body %}
+<body>
+    <div class="container"><h1 class="mt-5 mb-4">Ihre bisher verdiente Abzeichen</h1></div>
+    <div class="container">
+        <div class="row">
+          <div class="col">
+            <ul class="list-group">
+              {% for badge in badges %}
+                <li class="list-group-item">
+                  <div class="badge-title">{{ badge.badge_name }}</div>
+                  <div class="badge-description">{{ badge.description }}</div>
+                  <div class="badge-timestamp">Verdient am: {{ badge.timestamp.strftime('%Y-%m-%d') }}</div>
+                </li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+    </div>
+</body>
+{% endblock %}
