@@ -155,27 +155,6 @@ def user_profile(username):
     user_badges = orm_mapper.get_user_badges(username)
     return render_template('user_profile.html', total_points=total_points, badges=user_badges)
 
-@app.route('/user/<username>/manage_points', methods=['POST'])
-@is_logged_in
-def manage_points(username):
-    points_change = int(request.form['points'])
-    orm_mapper.change_user_points(username, points_change)
-    return redirect(url_for('user_profile', username=username))
-
-@app.route('/user/<username>/manage_badges', methods=['POST'])
-@is_logged_in
-def manage_badges(username):
-    badge_name = request.form['badge']
-    orm_mapper.add_user_badge(username, badge_name)
-    return redirect(url_for('user_profile', username=username))
-
-@app.route('/user/<username>/remove_badges', methods=['POST'])
-@is_logged_in
-def remove_badges(username):
-    badge_name_to_remove = request.form['badge_to_remove']
-    orm_mapper.remove_user_badge(username, badge_name_to_remove)
-    return redirect(url_for('user_profile', username=username))
-
 @app.route('/user/<username>/leaderboard', methods=['GET', 'POST'])
 @is_logged_in
 def leaderboard(username):
