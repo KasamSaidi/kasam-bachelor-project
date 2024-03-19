@@ -13,7 +13,7 @@ from routing.routing_processing import create_route_instance, geocode_location
 from interface.emissions_calc import get_emissions
 from input import bcrypt_passwords
 from mapper import orm_mapper
-from mapper.orm_mapper import Vehicle, Point, Badge
+from mapper.orm_mapper import Vehicle
 from login import login
 
 app = Flask(__name__)
@@ -48,7 +48,7 @@ def is_logged_in(func):
         return render_template("forbidden.html")
     return wrapper
 
-@app.route('/')
+@app.route("/")
 def index():
     return render_template('index.html')
 
@@ -144,16 +144,6 @@ def user_homepage(username):
     user_points = orm_mapper.get_total_points(username)
 
     return render_template("user_dashboard.html", the_username=username, user_points=user_points, badges=earned_badges, points=points)
-
-@app.route('/user/<username>')
-@is_logged_in
-def user_profile(username):
-    if not orm_mapper.check_if_table_empty(Point) and not orm_mapper.check_if_table_empty(Badge):
-        orm_mapper.add_badge(username, badge_name="Registriert")
-        orm_mapper.add_points(username, points=0)
-    total_points = orm_mapper.get_total_points(username)
-    user_badges = orm_mapper.get_user_badges(username)
-    return render_template('user_profile.html', total_points=total_points, badges=user_badges)
 
 @app.route('/user/<username>/leaderboard', methods=['GET', 'POST'])
 @is_logged_in

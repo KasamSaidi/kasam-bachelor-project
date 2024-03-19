@@ -1,18 +1,5 @@
 import pyodbc
-
-
-def connect_to_hbefa():
-    pyodbc.pooling = False
-    dbconn = pyodbc.connect(
-        r'Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=C:\Program Files (x86)\HBEFA\HBEFA 4.2\program\HBEFA42_Prog.accde;'
-    )
-    cursor = dbconn.cursor()
-    tablename = "B_EFA_NonReg_Poll_per_vehkm"
-    sql = f'select * from "{tablename}"'
-    cursor.execute(sql)
-    for row in cursor.description:
-        print(row)
-        print("----------------------------------------------------------------------------------------------")
+import os
 
 def get_result_table(concept, fuel_type, traffic_situation):
     concept_table_mapping = {
@@ -26,8 +13,9 @@ def get_result_table(concept, fuel_type, traffic_situation):
         "PM": "EFA_HOT_Concept_PM_Ergebnisse",
     }
     result = []
+    file_path = os.path.abspath(os.getcwd()) + "\HBEFA42_User.MDB"
     dbconn = pyodbc.connect(
-        r'Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=C:\Users\User\Desktop\BACHELOR\HBEFA\hbefa64\HB42_DB_files_64bit\user\HBEFA42_User.MDB;'
+        r'Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=' + file_path + r';'
     )
     cursor = dbconn.cursor()
     tablename = concept_table_mapping.get(concept, "CO")
